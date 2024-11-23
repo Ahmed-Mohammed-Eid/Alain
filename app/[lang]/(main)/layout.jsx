@@ -4,12 +4,12 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export const metadata = {
-    title: 'EasyDiet - Dashboard',
-    description: 'EasyDiet - Dashboard',
+    title: 'Alain - Dashboard',
+    description: 'Alain - Dashboard',
     robots: { index: false, follow: false },
     viewport: { initialScale: 1, width: 'device-width' },
     icons: {
-        icon: '/assets/logo-transparent.png'
+        icon: '/assets/favicon.ico'
     }
 };
 
