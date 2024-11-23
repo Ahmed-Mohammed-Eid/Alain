@@ -17,27 +17,20 @@ const AppMenu = ({ dictionary, lang }: ChildContainerProps) => {
             label: dictionary.sidebar.home.title,
             items: [{ label: dictionary.sidebar.home.dashboard, icon: 'pi pi-fw pi-home', to: `/${lang}/` }]
         },
-        {
-            label: lang === 'en' ? 'Sections' : 'الأقسام',
-            items: [
-                { label: lang === 'en' ? 'Sections List' : 'قائمة الأقسام', icon: 'pi pi-fw pi-list', to: `/${lang}/sections` },
-                { label: lang === 'en' ? 'Add Section' : 'إضافة قسم', icon: 'pi pi-fw pi-plus', to: `/${lang}/sections/create` }
-            ]
-        },
-        {
-            label: lang === 'en' ? 'Files' : 'الملفات',
-            items: [
-                { label: lang === 'en' ? 'Files List' : 'قائمة الملفات', icon: 'pi pi-fw pi-list', to: `/${lang}/media` },
-                { label: lang === 'en' ? 'Add File' : 'إضافة ملف', icon: 'pi pi-fw pi-plus', to: `/${lang}/media/create` }
-            ]
-        },
-        {
-            label: lang === 'en' ? 'Assessments' : 'المعاينات',
-            items: [
-                { label: lang === 'en' ? 'Assessments List' : 'قائمة المعاينات', icon: 'pi pi-fw pi-list', to: `/${lang}/assessment` }
-                // {label: lang === 'en' ? 'Add Visit' : 'إضافة زيارة', icon: 'pi pi-fw pi plus', to: `/${lang}/visits/create`}
-            ]
-        },
+        // {
+        //     label: lang === 'en' ? 'Sections' : 'الأقسام',
+        //     items: [
+        //         { label: lang === 'en' ? 'Sections List' : 'قائمة الأقسام', icon: 'pi pi-fw pi-list', to: `/${lang}/sections` },
+        //         { label: lang === 'en' ? 'Add Section' : 'إضافة قسم', icon: 'pi pi-fw pi-plus', to: `/${lang}/sections/create` }
+        //     ]
+        // },
+        // {
+        //     label: lang === 'en' ? 'Files' : 'الملفات',
+        //     items: [
+        //         { label: lang === 'en' ? 'Files List' : 'قائمة الملفات', icon: 'pi pi-fw pi-list', to: `/${lang}/media` },
+        //         { label: lang === 'en' ? 'Add File' : 'إضافة ملف', icon: 'pi pi-fw pi-plus', to: `/${lang}/media/create` }
+        //     ]
+        // },
         {
             label: lang === 'en' ? 'Maintenance' : 'الصيانة',
             items: [{ label: lang === 'en' ? 'Maintenance List' : 'قائمة الصيانات', icon: 'pi pi-fw pi-list', to: `/${lang}/maintenance` }]
@@ -51,17 +44,21 @@ const AppMenu = ({ dictionary, lang }: ChildContainerProps) => {
             ]
         },
         {
+            label: lang === 'en' ? 'Units' : 'الوحدات',
+            items: [{ label: lang === 'en' ? 'Units List' : 'قائمة الوحدات', icon: 'pi pi-fw pi-list', to: `/${lang}/units` }]
+        },
+        {
             label: lang === 'en' ? 'Services' : 'الخدمات',
             items: [
                 { label: lang === 'en' ? 'Services List' : 'قائمة الخدمات', icon: 'pi pi-fw pi-list', to: `/${lang}/services` },
                 { label: lang === 'en' ? 'Add Service' : 'إضافة خدمة', icon: 'pi pi-fw pi-plus', to: `/${lang}/services/create` }
             ]
         },
-        {
-            label: lang === 'en' ? 'Reports' : 'التقارير',
-            icon: 'pi pi-fw pi-chart-bar',
-            items: [{ label: lang === 'en' ? 'Reports List' : 'قائمة التقارير', icon: 'pi pi-fw pi-list', to: `/${lang}/reports` }]
-        },
+        // {
+        //     label: lang === 'en' ? 'Reports' : 'التقارير',
+        //     icon: 'pi pi-fw pi-chart-bar',
+        //     items: [{ label: lang === 'en' ? 'Reports List' : 'قائمة التقارير', icon: 'pi pi-fw pi-list', to: `/${lang}/reports` }]
+        // },
         {
             label: dictionary.sidebar.settings.title,
             items: [
