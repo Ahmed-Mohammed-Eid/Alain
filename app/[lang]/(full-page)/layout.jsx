@@ -3,12 +3,15 @@ import React from 'react';
 import { getDictionary } from '../../dictionaries/dictionaries';
 
 export const metadata = {
-    title: 'EasyDiet - Login',
-    description: 'EasyDiet - Login',
+    title: 'Alain - Login',
+    description: 'Alain - Login',
+    icons: {
+        icon: '/assets/favicon.ico'
+    }
 };
 
-export default async function SimpleLayout({ children, params: {lang} }) {
-    const dictionary = await getDictionary(lang)
+export default async function SimpleLayout({ children, params: { lang } }) {
+    const dictionary = await getDictionary(lang);
 
     return (
         <React.Fragment>
