@@ -37,11 +37,11 @@ export default function ContractsEditForm({ lang, contractId }) {
         const fetchContractData = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await axios.get(`${process.env.API_URL}/client/contracts?clientId=${id}`, {
+                const response = await axios.get(`${process.env.API_URL}/client/contract?contractId=${id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
-                const contract = response.data?.clientContracts;
+                const contract = response.data?.clientContract;
                 if (contract) {
                     // Convert date strings to Date objects
                     setForm({
@@ -53,6 +53,7 @@ export default function ContractsEditForm({ lang, contractId }) {
                         contractDate: new Date(contract.contractDate),
                         contractStartDate: new Date(contract.contractStartDate),
                         contractEndDate: new Date(contract.contractEndDate),
+                        contractId: contract._id,
                         installments: contract.installments.map((inst) => ({
                             ...inst,
                             date: new Date(inst.date)
@@ -177,7 +178,7 @@ export default function ContractsEditForm({ lang, contractId }) {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`${process.env.API_URL}/update/contract/${id}`, form, {
+            await axios.put(`${process.env.API_URL}/edit/contract`, form, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success(t.success);

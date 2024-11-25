@@ -54,13 +54,13 @@ const AppMenu = ({ dictionary, lang }: ChildContainerProps) => {
                 { label: lang === 'en' ? 'Add Service' : 'إضافة خدمة', icon: 'pi pi-fw pi-plus', to: `/${lang}/services/create` }
             ]
         },
-        // {
-        //     label: lang === 'en' ? 'Contracts' : 'العقود',
-        //     items: [
-        //         { label: lang === 'en' ? 'Contracts List' : 'قائمة العقود', icon: 'pi pi-fw pi-list', to: `/${lang}/contracts` },
-        //         { label: lang === 'en' ? 'Add Contract' : 'إضافة عقد', icon: 'pi pi-fw pi-plus', to: `/${lang}/contracts/create` }
-        //     ]
-        // },
+        {
+            label: lang === 'en' ? 'Contracts' : 'العقود',
+            items: [
+                { label: lang === 'en' ? 'Contracts List' : 'قائمة العقود', icon: 'pi pi-fw pi-list', to: `/${lang}/contracts` },
+                { label: lang === 'en' ? 'Add Contract' : 'إضافة عقد', icon: 'pi pi-fw pi-plus', to: `/${lang}/contracts/create` }
+            ]
+        },
         // {
         //     label: lang === 'en' ? 'Reports' : 'التقارير',
         //     icon: 'pi pi-fw pi-chart-bar',
