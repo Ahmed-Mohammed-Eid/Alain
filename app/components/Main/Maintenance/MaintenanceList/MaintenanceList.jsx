@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
+import { Dropdown } from 'primereact/dropdown';
 
 export default function MaintenanceList({ lang }) {
     // RTL Check
@@ -46,7 +47,15 @@ export default function MaintenanceList({ lang }) {
             deleteError: 'An error occurred while deleting data.',
             fetchError: 'An error occurred while fetching data.',
             statusChangeSuccess: 'Visit status changed successfully.',
-            statusChangeError: 'An error occurred while changing visit status.'
+            statusChangeError: 'An error occurred while changing visit status.',
+            assign: 'Assign',
+            assigned: 'Assigned',
+            assignTo: 'Assign To Agent',
+            selectAgent: 'Select Agent',
+            assignSuccess: 'Maintenance assigned successfully',
+            assignError: 'Error assigning maintenance',
+            fetchAgentsError: 'Error fetching agents',
+            noAgents: 'No agents available'
         },
         ar: {
             clientName: 'اسم العميل',
@@ -79,7 +88,15 @@ export default function MaintenanceList({ lang }) {
             deleteError: 'حدث خطأ ما أثناء حذف البيانات.',
             fetchError: 'حدث خطأ ما أثناء جلب البيانات.',
             statusChangeSuccess: 'تم تغيير حالة المعاينة بنجاح.',
-            statusChangeError: 'حدث خطأ ما أثناء تغيير حالة المعاينة.'
+            statusChangeError: 'حدث خطأ ما أثناء تغيير حالة المعاينة.',
+            assign: 'تعيين',
+            assigned: 'تم التعيين',
+            assignTo: 'تعيين إلى وكيل',
+            selectAgent: 'اختر وكيل',
+            assignSuccess: 'تم تعيين الصيانة بنجاح',
+            assignError: 'خطأ في تعيين الصيانة',
+            fetchAgentsError: 'خطأ في جلب الوكلاء',
+            noAgents: 'لا يوجد وكلاء متاحين'
         }
     }[lang];
 
@@ -92,6 +109,10 @@ export default function MaintenanceList({ lang }) {
     const [maintenancesIdToDelete, setMaintenancesIdToDelete] = React.useState(null);
     const [selectedItem, setSelectedItem] = React.useState(null);
     const [selectedMaintenance, setSelectedMaintenance] = React.useState(null);
+    const [agents, setAgents] = React.useState([]);
+    const [assignDialogVisible, setAssignDialogVisible] = React.useState(false);
+    const [selectedAgent, setSelectedAgent] = React.useState(null);
+    const [maintenanceToAssign, setMaintenanceToAssign] = React.useState(null);
 
     // GET THE MAINTENANCES FROM THE API
     function getMaintenances() {
@@ -120,29 +141,25 @@ export default function MaintenanceList({ lang }) {
 
     // DELETE THE PACKAGE HANDLER
     const deleteHandler = async () => {
-        //GET THE TOKEN
         const token = localStorage.getItem('token');
 
-        await axios
-            .delete(`${process.env.API_URL}/delete/maintenances`, {
+        try {
+            await axios.delete(`${process.env.API_URL}/delete/maintenance/request`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 },
                 params: {
-                    maintenancesId: maintenancesIdToDelete
+                    maintenanceId: maintenancesIdToDelete
                 }
-            })
-            .then((_) => {
-                // Show notification
-                toast.success(t.deleteSuccess);
-                // Hide the dialog
-                setVisible(false);
-                // Update the State
-                getMaintenances();
-            })
-            .catch((err) => {
-                toast.error(err.response?.data?.message || t.deleteError);
             });
+
+            toast.success(t.deleteSuccess);
+            setVisible(false);
+            setMaintenancesIdToDelete(null);
+            getMaintenances();
+        } catch (err) {
+            toast.error(err.response?.data?.message || t.deleteError);
+        }
     };
 
     const footerContent = (
@@ -163,11 +180,87 @@ export default function MaintenanceList({ lang }) {
         </div>
     );
 
+    // Add this new function to handle status updates
+    const updateMaintenanceStatus = async (maintenanceId) => {
+        const token = localStorage.getItem('token');
+
+        try {
+            await axios.put(
+                `${process.env.API_URL}/update/maintenance/status`,
+                {
+                    maintenanceId: maintenanceId,
+                    isVisited: true
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            toast.success(t.statusChangeSuccess);
+            setSelectedMaintenance(null);
+            getMaintenances();
+        } catch (err) {
+            toast.error(err?.response?.data?.message || t.statusChangeError);
+        }
+    };
+
+    // Add this function to fetch agents
+    const getAgents = async () => {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await axios.get(`${process.env.API_URL}/agents`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setAgents(response.data?.agents || []);
+        } catch (error) {
+            toast.error(error?.response?.data?.message || t.fetchAgentsError);
+        }
+    };
+
+    // Add this function to handle assignment
+    const assignMaintenance = async () => {
+        if (!selectedAgent || !maintenanceToAssign) return;
+
+        const token = localStorage.getItem('token');
+        try {
+            await axios.post(
+                `${process.env.API_URL}/assign/maintenance/order`,
+                {
+                    maintenanceId: maintenanceToAssign._id,
+                    agentId: selectedAgent
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            toast.success(t.assignSuccess);
+            setAssignDialogVisible(false);
+            setSelectedAgent(null);
+            setMaintenanceToAssign(null);
+            getMaintenances();
+        } catch (error) {
+            toast.error(error?.response?.data?.message || t.assignError);
+        }
+    };
+
+    // Add useEffect to fetch agents when component mounts
+    useEffect(() => {
+        getAgents();
+    }, []);
+
     return (
         <>
             <DataTable
                 value={maintenances || []}
                 style={{ width: '100%' }}
+                dir={isRTL ? 'rtl' : 'ltr'}
                 paginator={true}
                 rows={10}
                 rowsPerPageOptions={[5, 10, 20]}
@@ -186,9 +279,9 @@ export default function MaintenanceList({ lang }) {
                     style={{ width: '20%' }}
                     body={(rowData) => {
                         return (
-                            <div className="flex justify-center gap-2">
+                            <div className="flex justify-center gap-2 whitespace-nowrap">
                                 <button
-                                    className="btn btn-sm btn-info"
+                                    className="btn btn-sm btn-info min-w-[60px] no-wrap"
                                     onClick={() => {
                                         setSelectedItem(rowData);
                                     }}
@@ -197,7 +290,7 @@ export default function MaintenanceList({ lang }) {
                                 </button>
                                 <button
                                     disabled={rowData?.isVisited}
-                                    className={`btn btn-sm ${rowData?.isVisited ? 'btn-disabled' : 'btn-primary'}`}
+                                    className={`btn btn-sm min-w-[100px] no-wrap ${rowData?.isVisited ? 'btn-disabled' : 'btn-primary'}`}
                                     onClick={() => {
                                         setSelectedMaintenance(rowData);
                                     }}
@@ -205,29 +298,44 @@ export default function MaintenanceList({ lang }) {
                                     {rowData?.isVisited ? t.visited : t.completeVisit}
                                 </button>
                                 <button
-                                    className="btn btn-sm btn-warning"
+                                    className="btn btn-sm btn-warning min-w-[60px] no-wrap"
                                     onClick={() => {
                                         router.push(`/maintenance/${rowData._id}`);
                                     }}
                                 >
                                     {t.edit}
                                 </button>
-                                {/*<button*/}
-                                {/*    className="deleteButton"*/}
-                                {/*    onClick={() => {*/}
-                                {/*        setVisible(true);*/}
-                                {/*        setMaintenancesIdToDelete(rowData._id);*/}
-                                {/*    }}*/}
-                                {/*>*/}
-                                {/*    {t.delete}*/}
-                                {/*</button>*/}
+                                <button
+                                    className={`btn btn-sm btn-success min-w-[60px] no-wrap`}
+                                    // className={`btn btn-sm btn-success min-w-[60px] no-wrap ${rowData?.agentId ? 'btn-disabled' : ''}`}
+                                    // disabled={rowData?.agentId}
+                                    onClick={() => {
+                                        setMaintenanceToAssign(rowData);
+                                        setAssignDialogVisible(true);
+                                    }}
+                                >
+                                    {rowData?.agentId ? t.assigned : t.assign}
+                                </button>
+                                <button
+                                    className="btn btn-sm btn-danger min-w-[60px] no-wrap"
+                                    onClick={() => {
+                                        setMaintenancesIdToDelete(rowData._id);
+                                        setVisible(true);
+                                    }}
+                                >
+                                    {t.delete}
+                                </button>
                             </div>
                         );
                     }}
                 />
             </DataTable>
-            <Dialog header="Delete Maintenances" visible={visible} position={'top'} style={{ width: '90%', maxWidth: '650px' }} onHide={() => setVisible(false)} footer={footerContent} draggable={false} resizable={false}>
+            <Dialog header="Delete Maintenances" visible={visible} position={'top'} style={{ width: '50vw', direction: isRTL ? 'rtl' : 'ltr' }} onHide={() => setVisible(false)} draggable={false} resizable={false}>
                 <p className="m-0">{t.deleteConfirm}</p>
+                <div className="flex justify-end gap-2 mt-4">
+                    <Button label={t.cancel} onClick={() => setVisible(false)} className="p-button-outlined p-button-danger min-w-[100px]" />
+                    <Button label={t.confirm} onClick={deleteHandler} className="p-button-danger min-w-[100px]" />
+                </div>
             </Dialog>
             <Dialog onHide={() => setSelectedItem(null)} visible={!!selectedItem} header={t.visitDetails} style={{ width: '50vw' }}>
                 <div className={'grid'} dir={isRTL ? 'rtl' : 'ltr'}>
@@ -292,46 +400,43 @@ export default function MaintenanceList({ lang }) {
                 style={{ width: '50vw', direction: isRTL ? 'rtl' : 'ltr' }}
                 footer={() => {
                     return (
-                        <div className={'flex justify-between'} dir={isRTL ? 'rtl' : 'ltr'}>
-                            <Button
-                                label={t.confirm}
-                                onClick={() => {
-                                    axios
-                                        .put(
-                                            `${process.env.API_URL}/update/maintenance/status`,
-                                            {
-                                                visitId: selectedMaintenance?._id,
-                                                isVisited: true
-                                            },
-                                            {
-                                                headers: {
-                                                    Authorization: `Bearer ${localStorage.getItem('token')}`
-                                                }
-                                            }
-                                        )
-                                        .then((res) => {
-                                            toast.success(t.statusChangeSuccess);
-                                            setSelectedMaintenance(null);
-                                            getMaintenances();
-                                        })
-                                        .catch((err) => {
-                                            toast.error(err?.response?.data?.message || t.statusChangeError);
-                                        });
-                                }}
-                                className={'p-button-success'}
-                            />
-                            <Button
-                                label={t.cancel}
-                                onClick={() => {
-                                    setSelectedMaintenance(null);
-                                }}
-                                className={'p-button-danger'}
-                            />
+                        <div className={'flex justify-end gap-2'} dir={isRTL ? 'rtl' : 'ltr'}>
+                            <Button label={t.cancel} onClick={() => setSelectedMaintenance(null)} className="p-button-outlined p-button-danger min-w-[100px]" />
+                            <Button label={t.confirm} onClick={() => updateMaintenanceStatus(selectedMaintenance?._id)} className="p-button-success min-w-[100px]" />
                         </div>
                     );
                 }}
             >
                 <p>{t.changeStatusConfirm}</p>
+            </Dialog>
+            <Dialog
+                visible={assignDialogVisible}
+                onHide={() => {
+                    setAssignDialogVisible(false);
+                    setSelectedAgent(null);
+                    setMaintenanceToAssign(null);
+                }}
+                header={t.assignTo}
+                style={{ width: '50vw', direction: isRTL ? 'rtl' : 'ltr' }}
+            >
+                <div className="flex flex-column gap-4">
+                    <div className="flex flex-column gap-2">
+                        <label htmlFor="agent">{t.selectAgent}</label>
+                        <Dropdown id="agent" value={selectedAgent} onChange={(e) => setSelectedAgent(e.value)} options={agents} optionLabel="name" optionValue="_id" placeholder={t.selectAgent} className="w-full" />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                        <Button
+                            label={t.cancel}
+                            onClick={() => {
+                                setAssignDialogVisible(false);
+                                setSelectedAgent(null);
+                                setMaintenanceToAssign(null);
+                            }}
+                            className="p-button-outlined p-button-danger min-w-[100px]"
+                        />
+                        <Button label={t.confirm} onClick={assignMaintenance} className="p-button-success min-w-[100px]" disabled={!selectedAgent} />
+                    </div>
+                </div>
             </Dialog>
         </>
     );

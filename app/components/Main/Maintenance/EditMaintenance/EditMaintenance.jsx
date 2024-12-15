@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { Calendar } from 'primereact/calendar';
 import { textToTime, timeToText } from '../../../../../helpers/textToTime';
+import { Dropdown } from 'primereact/dropdown';
 
 export default function EditMaintenances({ maintenancesId, lang }) {
     // RTL Check
@@ -18,6 +19,7 @@ export default function EditMaintenances({ maintenancesId, lang }) {
     const t = {
         en: {
             title: 'Edit Visit',
+            agentId: 'Agent',
             clientName: 'Client Name',
             phoneNumber: 'Phone Number',
             governorate: 'Governorate',
@@ -36,12 +38,15 @@ export default function EditMaintenances({ maintenancesId, lang }) {
             fillAllFields: 'Please fill in all fields.',
             editSuccess: 'Visit edited successfully.',
             editError: 'An error occurred while editing the visit.',
-            fetchError: 'An error occurred while fetching visit data.'
+            fetchError: 'An error occurred while fetching visit data.',
+            realestateName: 'Realestate Name',
+            realestateNumber: 'Realestate Number'
         },
         ar: {
             title: 'تعديل الزيارة',
             clientName: 'اسم العميل',
             phoneNumber: 'رقم العميل',
+            agentId: 'المندوب',
             governorate: 'المحافظة',
             region: 'المنطقة',
             block: 'القطعة',
@@ -58,7 +63,9 @@ export default function EditMaintenances({ maintenancesId, lang }) {
             fillAllFields: 'يرجى تعبئة جميع الحقول.',
             editSuccess: 'تم تعديل الزيارة بنجاح.',
             editError: 'حدث خطأ أثناء تعديل الزيارة.',
-            fetchError: 'حدث خطأ أثناء جلب بيانات الزيارة.'
+            fetchError: 'حدث خطأ أثناء جلب بيانات الزيار.',
+            realestateName: 'اسم العقار',
+            realestateNumber: 'رقم العقار'
         }
     }[lang];
 
@@ -69,21 +76,18 @@ export default function EditMaintenances({ maintenancesId, lang }) {
     const [form, setForm] = useState({
         clientName: '',
         phoneNumber: '',
-        governorate: '',
-        region: '',
-        block: '',
-        street: '',
-        alley: '',
-        building: '',
-        floor: '',
-        appartment: '',
         visitDate: '',
         visitTime: '',
         description: '',
+        realestateName: '',
+        realestateNumber: '',
         files: [],
         agentId: '',
         visitId: ''
     });
+
+    // Agents
+    const [agents, setAgents] = useState([]);
 
     // HANDLERS
     function editMaintenances(event) {
@@ -91,21 +95,7 @@ export default function EditMaintenances({ maintenancesId, lang }) {
 
         const token = localStorage.getItem('token');
 
-        if (
-            form.clientName === '' ||
-            form.phoneNumber === '' ||
-            form.governorate === '' ||
-            form.region === '' ||
-            form.block === '' ||
-            form.street === '' ||
-            form.alley === '' ||
-            form.building === '' ||
-            form.floor === '' ||
-            form.appartment === '' ||
-            form.visitDate === '' ||
-            form.visitTime === '' ||
-            form.description === ''
-        ) {
+        if (form.clientName === '' || form.phoneNumber === '' || form.visitDate === '' || form.visitTime === '' || form.description === '') {
             toast.error(t.fillAllFields);
             return;
         }
@@ -117,17 +107,11 @@ export default function EditMaintenances({ maintenancesId, lang }) {
         formData.append('visitId', maintenancesId);
         formData.append('clientName', form.clientName);
         formData.append('phoneNumber', form.phoneNumber);
-        formData.append('governorate', form.governorate);
-        formData.append('region', form.region);
-        formData.append('block', form.block);
-        formData.append('street', form.street);
-        formData.append('alley', form.alley);
-        formData.append('building', form.building);
-        formData.append('floor', form.floor);
-        formData.append('appartment', form.appartment);
         formData.append('visitDate', form.visitDate);
         formData.append('visitTime', timeToText(form.visitTime));
         formData.append('description', form.description);
+        formData.append('realestateName', form.realestateName);
+        formData.append('realestateNumber', form.realestateNumber);
         formData.append('agentId', '');
 
         if (form?.files?.length > 0) {
@@ -137,7 +121,7 @@ export default function EditMaintenances({ maintenancesId, lang }) {
         }
 
         axios
-            .put(`${process.env.API_URL}/edit/maintenance`, formData, {
+            .put(`${process.env.API_URL}/admin/edit/maintenance`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -151,6 +135,21 @@ export default function EditMaintenances({ maintenancesId, lang }) {
                 setLoading(false);
             });
     }
+
+    // Add this function to fetch agents
+    const getAgents = async () => {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await axios.get(`${process.env.API_URL}/agents`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setAgents(response.data?.agents || []);
+        } catch (error) {
+            toast.error(error?.response?.data?.message || t.fetchAgentsError);
+        }
+    };
 
     function getMaintenance(id) {
         const token = localStorage.getItem('token');
@@ -167,18 +166,12 @@ export default function EditMaintenances({ maintenancesId, lang }) {
                 setForm({
                     clientName: maintenances?.clientName,
                     phoneNumber: maintenances?.phoneNumber,
-                    governorate: maintenances?.governorate,
-                    region: maintenances?.region,
-                    block: maintenances?.block,
-                    street: maintenances?.street,
-                    alley: maintenances?.alley,
-                    building: maintenances?.building,
-                    floor: maintenances?.floor,
-                    appartment: maintenances?.appartment,
                     visitDate: new Date(maintenances?.visitDate),
                     visitTime: textToTime(maintenances?.visitTime),
                     description: maintenances?.description,
-                    agentId: maintenances?.agentId
+                    realestateName: maintenances?.realestateName,
+                    realestateNumber: maintenances?.realestateNumber,
+                    agentId: maintenances?.agentId?._id
                 });
             })
             .catch((err) => {
@@ -188,6 +181,7 @@ export default function EditMaintenances({ maintenancesId, lang }) {
 
     useEffect(() => {
         getMaintenance(maintenancesId);
+        getAgents();
     }, [maintenancesId]);
 
     return (
@@ -203,42 +197,14 @@ export default function EditMaintenances({ maintenancesId, lang }) {
                     <InputText id="assessmentsType" value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} placeholder={t.phoneNumber} />
                 </div>
                 <div className="field col-12 md:col-6">
-                    <label htmlFor="sectionId">{t.governorate}</label>
-                    <InputText id={'sectionId'} value={form.governorate} onChange={(e) => setForm({ ...form, governorate: e.value })} placeholder={t.governorate} />
-                </div>
-                <div className="field col-12 md:col-6">
-                    <label htmlFor="sectionId">{t.region}</label>
-                    <InputText id="sectionId" value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} placeholder={t.region} />
-                </div>
-                <div className="field col-12 md:col-6">
-                    <label htmlFor="sectionId">{t.block}</label>
-                    <InputText id="sectionId" value={form.block} onChange={(e) => setForm({ ...form, block: e.target.value })} placeholder={t.block} />
-                </div>
-                <div className="field col-12 md:col-6">
-                    <label htmlFor="sectionId">{t.street}</label>
-                    <InputText id="sectionId" value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} placeholder={t.street} />
-                </div>
-                <div className="field col-12 md:col-6">
-                    <label htmlFor="sectionId">{t.alley}</label>
-                    <InputText id="sectionId" value={form.alley} onChange={(e) => setForm({ ...form, alley: e.target.value })} placeholder={t.alley} />
-                </div>
-                <div className="field col-12 md:col-6">
-                    <label htmlFor="sectionId">{t.building}</label>
-                    <InputText id="sectionId" value={form.building} onChange={(e) => setForm({ ...form, building: e.target.value })} placeholder={t.building} />
-                </div>
-                <div className="field col-12 md:col-6">
-                    <label htmlFor="sectionId">{t.floor}</label>
-                    <InputText id="sectionId" value={form.floor} onChange={(e) => setForm({ ...form, floor: e.target.value })} placeholder={t.floor} />
-                </div>
-                <div className="field col-12">
-                    <label htmlFor="sectionId">{t.apartment}</label>
-                    <InputText id="sectionId" value={form.appartment} onChange={(e) => setForm({ ...form, appartment: e.target.value })} placeholder={t.apartment} />
-                </div>
-                <div className="field col-12 md:col-6">
                     <label htmlFor="sectionId">{t.visitDate}</label>
                     <Calendar id="sectionId" value={form.visitDate} onChange={(e) => setForm({ ...form, visitDate: e.target.value })} placeholder={t.visitDate} dateFormat={'dd/mm/yy'} />
                 </div>
-                <div className="field col-12 md:col-6">
+                <div className="field col-12">
+                    <label htmlFor="agentId">{t.agentId}</label>
+                    <Dropdown id="agentId" options={agents} value={form.agentId} optionLabel="name" optionValue="_id" onChange={(e) => setForm({ ...form, agentId: e.target.value })} placeholder={t.agentId} />
+                </div>
+                <div className="field col-12">
                     <label htmlFor="sectionId">{t.visitTime}</label>
                     <Calendar
                         id="sectionId"
@@ -251,6 +217,14 @@ export default function EditMaintenances({ maintenancesId, lang }) {
                         placeholder={t.visitTime}
                     />
                 </div>
+                <div className="field col-12 md:col-6">
+                    <label htmlFor="realestateName">{t.realestateName}</label>
+                    <InputText id="realestateName" value={form.realestateName} onChange={(e) => setForm({ ...form, realestateName: e.target.value })} placeholder={t.realestateName} />
+                </div>
+                <div className="field col-12 md:col-6">
+                    <label htmlFor="realestateNumber">{t.realestateNumber}</label>
+                    <InputText id="realestateNumber" value={form.realestateNumber} onChange={(e) => setForm({ ...form, realestateNumber: e.target.value })} placeholder={t.realestateNumber} />
+                </div>
                 <div className="field col-12">
                     <label htmlFor="description">{t.description}</label>
                     <InputTextarea id="description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder={t.description} />
@@ -260,8 +234,9 @@ export default function EditMaintenances({ maintenancesId, lang }) {
                     <CustomFileUpload id={'files'} files={form.files} multiple setFiles={(files) => setForm({ ...form, files: files })} />
                 </div>
 
-                <div className="field col-12 md:col-6 mt-4 ml-auto">
+                <div className="field col-12 mt-4 ml-auto">
                     <Button
+                        icon={loading ? 'pi pi-spin pi-spinner' : 'pi pi-check'}
                         type={'submit'}
                         label={
                             loading ? (

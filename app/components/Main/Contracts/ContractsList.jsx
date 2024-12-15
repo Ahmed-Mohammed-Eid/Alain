@@ -8,7 +8,11 @@ import { useRouter } from 'next/navigation';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Badge } from 'primereact/badge';
+import { InputText } from 'primereact/inputtext';
+import { Dropdown } from 'primereact/dropdown';
 import { ConfirmPopup, confirmPopup } from 'primereact/confirmpopup';
+
+import { OverlayPanel } from 'primereact/overlaypanel';
 
 export default function ContractsList({ lang }) {
     // ROUTER
@@ -18,6 +22,17 @@ export default function ContractsList({ lang }) {
     const [contracts, setContracts] = React.useState([]);
     const [selectedItem, setSelectedItem] = React.useState(null);
     const [expandedRows, setExpandedRows] = React.useState(null);
+    const [objectForPayment, setObjectForPayment] = React.useState({
+        clientId: '',
+        contractId: '',
+        amountPaid: '',
+        paymentId: '',
+        installmentId: '',
+        paymentType: ''
+    });
+
+    // OVERLAY PANEL
+    const overlayPanelRef = useRef(null);
 
     // GET THE CONTRACTS FROM THE API
     function getContracts() {
@@ -61,6 +76,64 @@ export default function ContractsList({ lang }) {
             })
             .catch((err) => {
                 toast.error(err.response?.data?.message || (lang === 'en' ? 'An error occurred while deleting the contract.' : 'حدث خطأ ما أثناء حذف العقد.'));
+            });
+    };
+
+    // ADD PAYMENT HANDLER
+    const payInstallmentHandler = async () => {
+        const token = localStorage.getItem('token');
+
+        // check if the payment id is empty
+        if (!objectForPayment.paymentId) {
+            toast.error(lang === 'en' ? 'Payment ID is required.' : 'رقم الدفعة مطلوب.');
+            return;
+        }
+
+        // check if the payment type is empty
+        if (!objectForPayment.paymentType) {
+            toast.error(lang === 'en' ? 'Payment Type is required.' : 'طريقة الدفع مطلوبة.');
+            return;
+        }
+
+        // check if the amount paid is empty
+        if (!objectForPayment.amountPaid) {
+            toast.error(lang === 'en' ? 'Amount Paid is required.' : 'المبلغ المدفوع مطلوب.');
+            return;
+        }
+
+        // check if the installment id is empty
+        if (!objectForPayment.installmentId) {
+            toast.error(lang === 'en' ? 'Installment ID is required.' : 'رقم القسط مطلوب.');
+            return;
+        }
+
+        // check if the client id is empty
+        if (!objectForPayment.clientId) {
+            toast.error(lang === 'en' ? 'Client ID is required.' : 'رقم العميل مطلوب.');
+            return;
+        }
+
+        // check if the contract id is empty
+        if (!objectForPayment.contractId) {
+            toast.error(lang === 'en' ? 'Contract ID is required.' : 'رقم العقد مطلوب.');
+            return;
+        }
+
+        await axios
+            .post(`${process.env.API_URL}/pay/contract/installment`, objectForPayment, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            .then(async (_) => {
+                toast.success(lang === 'en' ? 'Payment added successfully.' : 'تم إضافة الدفعة بنجاح.');
+                await getContracts();
+                // REUPDATE THE SELECTED ITEM OBJECT
+                setSelectedItem(null);
+                setExpandedRows(null);
+            })
+            .catch((err) => {
+                toast.error(err.response?.data?.message || (lang === 'en' ? 'An error occurred while adding the payment.' : 'حدث خطأ ما أثناء إضافة الدفعة.'));
             });
     };
 
@@ -116,16 +189,90 @@ export default function ContractsList({ lang }) {
     };
 
     const installmentRowExpansionTemplate = (data) => {
-        console.log(data);
         return (
             <div className="p-3">
                 <h5>{lang === 'en' ? `Installments for Contract dated ${formatDate(data.contractDate)}` : `الأقساط للعقد بتاريخ ${formatDate(data.contractDate)}`}</h5>
                 <DataTable value={data.installments}>
                     <Column field="installmentDate" header={lang === 'en' ? 'Date' : 'التاريخ'} body={(rowData) => formatDate(rowData.date)} sortable />
                     <Column field="price" header={lang === 'en' ? 'Amount' : 'المبلغ'} body={(rowData) => formatCurrency(rowData.price)} sortable />
-                    <Column field="paid" header={lang === 'en' ? 'Status' : 'الحالة'} sortable body={(rowData) => (rowData.paid ? <Badge value={lang === 'en' ? 'Paid' : 'مدفوع'} /> : <Badge value={lang === 'en' ? 'Unpaid' : 'غير مدفوع'} />)} />
+                    <Column
+                        field="paid"
+                        header={lang === 'en' ? 'Status' : 'الحالة'}
+                        sortable
+                        body={(rowData) => (rowData.paid ? <Badge value={lang === 'en' ? 'Paid' : 'مدفوع'} style={{ backgroundColor: 'green' }} /> : <Badge value={lang === 'en' ? 'Unpaid' : 'غير مدفوع'} style={{ backgroundColor: 'orange' }} />)}
+                    />
                     <Column field="paymentType" header={lang === 'en' ? 'Payment Type' : 'طريقة الدفع'} sortable />
                     <Column field="reason" header={lang === 'en' ? 'Reason' : 'السبب'} sortable />
+                    {/* ACTIONS */}
+                    <Column
+                        header={lang === 'en' ? 'Actions' : 'الإجراءات'}
+                        style={{ width: '20%' }}
+                        body={(rowData) => {
+                            console.log(rowData);
+                            return (
+                                <div className="flex justify-center gap-2">
+                                    {/* mark as paid */}
+                                    {!rowData.paid && (
+                                        <>
+                                            <button
+                                                className="btn btn-sm btn-success"
+                                                onClick={(e) => {
+                                                    overlayPanelRef.current.toggle(e);
+                                                    setObjectForPayment({
+                                                        clientId: data.clientId,
+                                                        contractId: data._id,
+                                                        amountPaid: rowData.price,
+                                                        paymentId: '',
+                                                        installmentId: rowData._id,
+                                                        paymentType: rowData.paymentType
+                                                    });
+                                                }}
+                                            >
+                                                {lang === 'en' ? 'Mark as Paid' : 'تحديد كمدفوع'}
+                                            </button>
+
+                                            <OverlayPanel ref={overlayPanelRef}>
+                                                <div className="grid formgrid p-fluid">
+                                                    <div className="col-12 mb-2">
+                                                        <h5>{lang === 'en' ? 'Payment Type' : 'طريقة الدفع'}</h5>
+                                                        <Dropdown
+                                                            style={{ width: '100%' }}
+                                                            options={['cash', 'card', 'check']}
+                                                            value={objectForPayment.paymentType}
+                                                            onChange={(e) => {
+                                                                setObjectForPayment({
+                                                                    ...objectForPayment,
+                                                                    paymentType: e.value
+                                                                });
+                                                            }}
+                                                            placeholder={lang === 'en' ? 'Select Payment Type' : 'اختر طريقة الدفع'}
+                                                        />
+                                                    </div>
+                                                    <div className="col-12 mb-2">
+                                                        <h5>{lang === 'en' ? 'Payment ID' : 'رقم الدفعة'}</h5>
+                                                        <InputText
+                                                            style={{ width: '100%' }}
+                                                            value={objectForPayment.paymentId}
+                                                            onChange={(e) => {
+                                                                setObjectForPayment({
+                                                                    ...objectForPayment,
+                                                                    paymentId: e.target.value
+                                                                });
+                                                            }}
+                                                            placeholder={lang === 'en' ? 'Enter Payment ID' : 'أدخل رقم الدفعة'}
+                                                        />
+                                                    </div>
+                                                    <div className="col-12">
+                                                        <Button label={lang === 'en' ? 'Mark as Paid' : 'تحديد كمدفوع'} onClick={payInstallmentHandler} style={{ width: '100%' }} />
+                                                    </div>
+                                                </div>
+                                            </OverlayPanel>
+                                        </>
+                                    )}
+                                </div>
+                            );
+                        }}
+                    />
                 </DataTable>
             </div>
         );
