@@ -65,5 +65,23 @@
     "about": {
         "title": "من نحن",
         "description": "هذه الصفحة تتحدث عن الموقع"
+    },
+    "clientsLate": {
+        "title": "العملاء المتأخرين عن السداد"
+    },
+    "clientName": "اسم العميل",
+    "clientIdNumber": "رقم الهوية",
+    "clientPhone": "رقم الهاتف",
+    "contractType": "نوع العقد",
+    "contractAmount": "المبلغ",
+    "contractDate": "تاريخ العقد",
+    "startDate": "تاريخ البداية",
+    "endDate": "تاريخ النهاية",
+    "unpaidInstallments": "الأقساط غير المدفوعة",
+    "actions": "الإجراءات",
+    "currency": "جنيه",
+    "noDataFound": "لا توجد بيانات",
+    "errors": {
+        "general": "حدث خطأ أثناء جلب البيانات"
     }
 }

@@ -71,14 +71,16 @@ export default function UnitsForm({ lang }) {
                 unitType: 'شقه',
                 floorNumber: '',
                 unitNumber: '',
-                autoNumber: ''
+                autoNumber: '',
+                unitStatus: 'vacant'
             })),
             ...finalShops,
             ...Array.from({ length: newShopsToCreate }, (_, index) => ({
                 unitType: 'محل',
                 floorNumber: '',
                 unitNumber: '',
-                autoNumber: ''
+                autoNumber: '',
+                unitStatus: 'vacant'
             }))
         ]);
     };
@@ -111,6 +113,13 @@ export default function UnitsForm({ lang }) {
         setAllUnits(newUnits);
     };
 
+    // HANDLE THE UNIT STATUS CHANGE
+    const handleUnitStatusChange = (e, index) => {
+        const newUnits = [...allUnits];
+        newUnits[index].unitStatus = e.value;
+        setAllUnits(newUnits);
+    };
+
     // HANDLE THE SUBMIT
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -124,7 +133,8 @@ export default function UnitsForm({ lang }) {
                 unitType: unit.unitType,
                 floorNumber: unit.floorNumber,
                 unitNumber: unit.unitNumber,
-                autoNumber: unit.autoNumber
+                autoNumber: unit.autoNumber,
+                unitStatus: unit.unitStatus
             };
         });
         axios
@@ -200,13 +210,31 @@ export default function UnitsForm({ lang }) {
                                 <label htmlFor="floorNumber">{lang === 'en' ? 'Floor Number' : 'رقم الطابق'}</label>
                                 <InputNumber id="floorNumber" onChange={(e) => handleFloorNumberChange(e, index)} value={unit.floorNumber} />
                             </div>
-                            <div className="field col-12 md:col-3" key={'IU' + index}>
+                            <div className="field col-12 md:col-2" key={'IU' + index}>
                                 <label htmlFor="unitNumber">{lang === 'en' ? 'Unit Number' : 'رقم الوحدة'}</label>
                                 <InputNumber id="unitNumber" onChange={(e) => handleUnitNumberChange(e, index)} value={unit.unitNumber} />
                             </div>
-                            <div className="field col-12 md:col-3" key={'IA' + index}>
+                            <div className="field col-12 md:col-2" key={'IA' + index}>
                                 <label htmlFor="autoNumber">{lang === 'en' ? 'Auto Number' : 'الرقم الآلي للوحدة'}</label>
                                 <InputNumber id="autoNumber" onChange={(e) => handleAutoNumberChange(e, index)} value={unit.autoNumber} />
+                            </div>
+                            <div className="field col-12 md:col-2" key={'IS' + index}>
+                                <label htmlFor="unitStatus">{lang === 'en' ? 'Unit Status' : 'حالة الوحدة'}</label>
+                                <Dropdown
+                                    id="unitStatus"
+                                    options={[
+                                        {
+                                            label: lang === 'en' ? 'Vacant' : 'غير مؤجر',
+                                            value: 'vacant'
+                                        },
+                                        {
+                                            label: lang === 'en' ? 'occupied' : 'مؤجر',
+                                            value: 'occupied'
+                                        }
+                                    ]}
+                                    value={unit.unitStatus}
+                                    onChange={(e) => handleUnitStatusChange(e, index)}
+                                />
                             </div>
                         </div>
                     ))}

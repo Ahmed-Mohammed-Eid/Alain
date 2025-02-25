@@ -65,5 +65,23 @@
     "about": {
         "title": "About",
         "description": "This is the about page"
+    },
+    "clientsLate": {
+        "title": "Clients Behind Due Date"
+    },
+    "clientName": "Client Name",
+    "clientIdNumber": "ID Number",
+    "clientPhone": "Phone",
+    "contractType": "Contract Type",
+    "contractAmount": "Amount",
+    "contractDate": "Contract Date",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "unpaidInstallments": "Unpaid Installments",
+    "actions": "Actions",
+    "currency": "EGP",
+    "noDataFound": "No data found",
+    "errors": {
+        "general": "An error occurred while fetching data"
     }
 }
