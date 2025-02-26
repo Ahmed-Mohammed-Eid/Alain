@@ -62,7 +62,9 @@ const AppMenu = ({ dictionary, lang }: ChildContainerProps) => {
                 { label: lang === 'en' ? 'Send SMS' : 'إرسال رسالة نصية', icon: 'pi pi-fw pi-envelope', to: `/${lang}/clients/send-sms` },
                 { label: lang === 'en' ? 'Evacuate Clients' : 'إخلاء العملاء', icon: 'pi pi-fw pi-sign-out', to: `/${lang}/clients/evacuate-client` },
                 // LATE CLIENTS
-                { label: lang === 'en' ? 'Late Clients' : 'العملاء المتأخرين', icon: 'pi pi-fw pi-clock', to: `/${lang}/clients/clients-late` }
+                { label: lang === 'en' ? 'Late Clients' : 'العملاء المتأخرين', icon: 'pi pi-fw pi-clock', to: `/${lang}/clients/clients-late` },
+                // MESSAGES HISTORY
+                { label: lang === 'en' ? 'Messages History' : 'سجل الرسائل', icon: 'pi pi-fw pi-clock', to: `/${lang}/clients/messages-history` }
             ]
         },
         {
