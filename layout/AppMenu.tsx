@@ -51,7 +51,7 @@ const AppMenu = ({ dictionary, lang }: ChildContainerProps) => {
         {
             label: lang === 'en' ? 'Users' : 'المستخدمين',
             items: [
-                // { label: lang === 'en' ? 'Users List' : 'قائمة المستخدمين', icon: 'pi pi-fw pi-list', to: `/${lang}/users` },
+                { label: lang === 'en' ? 'Users List' : 'قائمة المستخدمين', icon: 'pi pi-fw pi-list', to: `/${lang}/users` },
                 { label: lang === 'en' ? 'Add User' : 'إضافة مستخدم', icon: 'pi pi-fw pi-plus', to: `/${lang}/users/create` }
             ]
         },
