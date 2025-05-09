@@ -57,7 +57,7 @@ const UserList = ({ lang }) => {
     };
 
     const handleEdit = (userId) => {
-        router.push(`/${lang}/users/edit/${userId}`);
+        router.push(`/${lang}/users/${userId}`);
     };
 
     const handleDelete = (userId) => {

@@ -10,12 +10,13 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
-const CreateUser = ({ params }) => {
+const UpdateUser = ({ params }) => {
     const lang = params.lang;
     const isRTL = lang === 'ar';
+    const userId = params.id;
     const translations = {
         en: {
-            title: 'Create New User',
+            title: 'Update User',
             employeeName: 'Employee Name',
             employeeNamePlaceholder: 'Enter employee name',
             username: 'Username',
@@ -25,19 +26,20 @@ const CreateUser = ({ params }) => {
             services: 'Services',
             servicesPlaceholder: 'Select services',
             accountDetails: 'Account Details',
-            password: 'Password',
-            passwordPlaceholder: 'Enter password',
-            confirmPassword: 'Confirm Password',
-            confirmPasswordPlaceholder: 'Re-enter password',
-            createUser: 'Create User',
+            password: 'Password (leave blank to keep current)',
+            passwordPlaceholder: 'Enter new password',
+            confirmPassword: 'Confirm New Password',
+            confirmPasswordPlaceholder: 'Re-enter new password',
+            updateUser: 'Update User',
             required: 'This field is required',
             passwordMismatch: 'Passwords do not match',
-            success: 'User created successfully',
-            error: 'Failed to create user',
-            fillRequired: 'Please fill in all required fields'
+            success: 'User updated successfully',
+            error: 'Failed to update user',
+            fillRequired: 'Please fill in all required fields',
+            loadingUser: 'Loading user data...'
         },
         ar: {
-            title: 'إنشاء مستخدم جديد',
+            title: 'تحديث المستخدم',
             employeeName: 'اسم الموظف',
             employeeNamePlaceholder: 'أدخل اسم الموظف',
             username: 'اسم المستخدم',
@@ -47,16 +49,17 @@ const CreateUser = ({ params }) => {
             services: 'الخدمات',
             servicesPlaceholder: 'اختر الخدمات',
             accountDetails: 'تفاصيل الحساب',
-            password: 'كلمة المرور',
-            passwordPlaceholder: 'أدخل كلمة المرور',
-            confirmPassword: 'تأكيد كلمة المرور',
-            confirmPasswordPlaceholder: 'أعد إدخال كلمة المرور',
-            createUser: 'إنشاء مستخدم',
+            password: 'كلمة المرور (اتركها فارغة للاحتفاظ بالحاليه)',
+            passwordPlaceholder: 'أدخل كلمة المرور الجديدة',
+            confirmPassword: 'تأكيد كلمة المرور الجديدة',
+            confirmPasswordPlaceholder: 'أعد إدخال كلمة المرور الجديدة',
+            updateUser: 'تحديث المستخدم',
             required: 'هذا الحقل مطلوب',
             passwordMismatch: 'كلمات المرور غير متطابقة',
-            success: 'تم إنشاء المستخدم بنجاح',
-            error: 'فشل في إنشاء المستخدم',
-            fillRequired: 'يرجى ملء جميع الحقول المطلوبة'
+            success: 'تم تحديث المستخدم بنجاح',
+            error: 'فشل في تحديث المستخدم',
+            fillRequired: 'يرجى ملء جميع الحقول المطلوبة',
+            loadingUser: 'جاري تحميل بيانات المستخدم...'
         }
     }[lang];
     const router = useRouter();
@@ -82,30 +85,65 @@ const CreateUser = ({ params }) => {
         { label: 'Admin', value: 'admin' }
     ];
 
+    useEffect(() => {
+        const fetchUserData = async () => {
+            if (!userId) return;
+            setLoading(true);
+            toast.loading(translations.loadingUser);
+            try {
+                const token = localStorage.getItem('token');
+                const res = await axios.get(`${process.env.API_URL}/system/user/details?userId=${userId}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                const userData = res.data?.user;
+                if (userData) {
+                    setFormData({
+                        employeeName: userData.name || '',
+                        username: userData.username || '',
+                        role: userData.role || '',
+                        servicesIds: userData.servicesIds || [],
+                        password: '', // Password should be empty initially for update
+                        confirmPassword: ''
+                    });
+                } else {
+                    toast.error(translations.error);
+                }
+            } catch (error) {
+                console.error(error);
+                toast.error(error.response?.data?.message || error.message || translations.error);
+            } finally {
+                setLoading(false);
+                toast.dismiss();
+            }
+        };
+        fetchUserData();
+    }, [userId, lang]); // Added lang to dependencies in case translations are needed in fetch
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitted(true);
 
-        // Validation check
-        if (!formData.employeeName || !formData.username || !formData.role || !formData.password) {
+        // Validation check (excluding password if not being changed)
+        if (!formData.employeeName || !formData.username || !formData.role) {
             toast.error(translations.fillRequired);
+            return;
+        }
+
+        if (formData.password && formData.password !== formData.confirmPassword) {
+            toast.error(translations.passwordMismatch);
             return;
         }
 
         setLoading(true);
         try {
-            // get the token from local storage
             const token = localStorage.getItem('token');
-
-            // Validate password match
-            if (formData.password !== formData.confirmPassword) {
-                toast.error(translations.passwordMismatch);
-                return;
-            }
-
             const { confirmPassword, ...submitData } = formData;
 
-            const res = await axios.post(`${process.env.API_URL}/create/user`, submitData, {
+            const payload = { ...submitData, userId };
+
+            await axios.put(`${process.env.API_URL}/update/user/details`, payload, {
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
@@ -113,13 +151,11 @@ const CreateUser = ({ params }) => {
             });
 
             toast.success(translations.success);
-
-            // // Redirect after success
-            // setTimeout(() => {
-            //     router.push('/users');
-            // }, 1500);
+            // Optionally redirect or clear form
+            router.push(`/${lang}/users`);
         } catch (error) {
-            toast.error(error.message);
+            console.error(error);
+            toast.error(error.response?.data?.message || error.message || translations.error);
         } finally {
             setLoading(false);
         }
@@ -135,18 +171,15 @@ const CreateUser = ({ params }) => {
         try {
             const token = localStorage.getItem('token');
             const res = await axios.get(`${process.env.API_URL}/all/services`, {
-                method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
                 }
             });
-
-            const services = res.data?.services || [];
-            setServices(services);
+            const fetchedServices = res.data?.services || [];
+            setServices(fetchedServices);
         } catch (error) {
             console.error(error);
-            toast.error(error?.message || translations.error);
+            toast.error(error.response?.data?.message || error.message || 'Failed to load services');
         }
     };
 
@@ -239,13 +272,13 @@ const CreateUser = ({ params }) => {
                                 onChange={(e) => handleInputChange(e.target.value, 'password')}
                                 toggleMask
                                 placeholder={translations.passwordPlaceholder}
-                                className={classNames('w-full', {
-                                    'p-invalid': submitted && !formData.password
+                                className={classNames('w-full', { // No p-invalid for optional password on initial load
+                                    'p-invalid': submitted && formData.password && formData.password !== formData.confirmPassword
                                 })}
                                 feedback={false}
                                 inputStyle={{ width: '100%' }}
                             />
-                            {submitted && !formData.password && <small className="p-error">{translations.required}</small>}
+                            {/* No required validation for password itself, only if confirmPassword doesn't match */}
                         </div>
 
                         <div className="col-12 md:col-6">
@@ -259,21 +292,21 @@ const CreateUser = ({ params }) => {
                                 toggleMask
                                 placeholder={translations.confirmPasswordPlaceholder}
                                 className={classNames('w-full', {
-                                    'p-invalid': submitted && (!formData.confirmPassword || formData.password !== formData.confirmPassword)
+                                    'p-invalid': submitted && formData.password && formData.password !== formData.confirmPassword
                                 })}
                                 feedback={false}
                                 inputStyle={{ width: '100%' }}
+                                disabled={!formData.password} // Disable if password field is empty
                             />
-                            {submitted && !formData.confirmPassword && <small className="p-error">{translations.required}</small>}
-                            {submitted && formData.confirmPassword && formData.password !== formData.confirmPassword && <small className="p-error">{translations.passwordMismatch}</small>}
+                            {submitted && formData.password && formData.password !== formData.confirmPassword && <small className="p-error">{translations.passwordMismatch}</small>}
                         </div>
                     </div>
                 </div>
 
-                <Button type="submit" label={translations.createUser} icon="pi pi-user-plus" loading={loading} className="w-auto mt-4" />
+                <Button type="submit" label={translations.updateUser} icon="pi pi-user-edit" loading={loading} className="w-auto mt-4" />
             </form>
         </div>
     );
 };
 
-export default CreateUser;
+export default UpdateUser;
