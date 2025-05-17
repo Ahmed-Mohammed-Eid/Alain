@@ -55,7 +55,10 @@ export default function MaintenanceList({ lang }) {
             assignSuccess: 'Maintenance assigned successfully',
             assignError: 'Error assigning maintenance',
             fetchAgentsError: 'Error fetching agents',
-            noAgents: 'No agents available'
+            noAgents: 'No agents available',
+            unitNumber: 'Unit Number',
+            realestateName: 'Real Estate Name',
+            ticketStatus: 'Ticket Status'
         },
         ar: {
             clientName: 'اسم العميل',
@@ -96,7 +99,10 @@ export default function MaintenanceList({ lang }) {
             assignSuccess: 'تم تعيين الصيانة بنجاح',
             assignError: 'خطأ في تعيين الصيانة',
             fetchAgentsError: 'خطأ في جلب الوكلاء',
-            noAgents: 'لا يوجد وكلاء متاحين'
+            noAgents: 'لا يوجد وكلاء متاحين',
+            unitNumber: 'رقم الوحدة',
+            realestateName: 'اسم العقار',
+            ticketStatus: 'حالة التذكرة'
         }
     }[lang];
 
@@ -269,9 +275,33 @@ export default function MaintenanceList({ lang }) {
             >
                 <Column field="clientName" header={t.clientName} sortable filter />
                 <Column field="phoneNumber" header={t.phoneNumber} sortable filter />
-                <Column field={'governorate'} header={t.governorate} sortable filter />
-                <Column field={'region'} header={t.region} sortable filter />
-                <Column field={'block'} header={t.block} sortable filter />
+                {/* unitNumber */}
+                <Column field={'unitId.unitNumber'} header={t.unitNumber} sortable filter />
+                {/* realestateName */}
+                <Column field={'realestateName'} header={t.realestateName} sortable filter />
+                <Column field={'ticketStatus'} header={t.ticketStatus} sortable filter 
+                    body={(rowData) => {
+                        const tickets = rowData?.ticketStatus || [];
+                        const lastStatus = tickets?.slice(-1)[0];
+
+                        return (
+                            <div className="flex flex-column">
+                                <span>
+                                    {lastStatus?.status}
+                                </span>
+                                <span>
+                                    {/* DATE AND TIME */}
+                                    {new Date(lastStatus?.date).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                    })} {new Date(lastStatus?.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            </div>
+                        )
+                    }}
+                
+                />
 
                 <Column
                     field={'_id'}
