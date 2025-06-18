@@ -23,7 +23,14 @@ export default function ContractsCreateForm({ lang }) {
         contractType: '',
         clientIdNumber: '',
         clientPhone: '',
-        clientAddress: '',
+        clientAddress: {
+            Governorate: '',
+            region: '',
+            block: '',
+            street: '',
+            building: '',
+            apartment: ''
+        },
         contractAmount: 0,
         contractStartDate: null,
         contractDuration: 0,
@@ -41,6 +48,12 @@ export default function ContractsCreateForm({ lang }) {
             clientName: 'اسم العميل',
             clientIdNumber: 'رقم الهوية',
             clientAddress: 'عنوان العميل',
+            governorate: 'المحافظة',
+            region: 'المنطقة',
+            block: 'القطعة',
+            street: 'الشارع',
+            building: 'المبنى',
+            apartment: 'الشقة',
             contractDate: 'تاريخ العقد',
             contractAmount: 'قيمة العقد',
             contractStartDate: 'تاريخ بداية العقد',
@@ -82,6 +95,12 @@ export default function ContractsCreateForm({ lang }) {
             clientName: 'Client Name',
             clientIdNumber: 'ID Number',
             clientAddress: 'Client Address',
+            governorate: 'Governorate',
+            region: 'Region',
+            block: 'Block',
+            street: 'Street',
+            building: 'Building',
+            apartment: 'Apartment',
             contractDate: 'Contract Date',
             contractAmount: 'Contract Amount',
             contractStartDate: 'Contract Start Date',
@@ -136,7 +155,7 @@ export default function ContractsCreateForm({ lang }) {
                     ...prev,
                     clientName: clientName,
                     clientIdNumber: clientIdNumber,
-                    clientAddress: clientAddress
+                    clientAddress: clientAddress || prev.clientAddress
                 }));
             }
         } catch (error) {
@@ -173,6 +192,17 @@ export default function ContractsCreateForm({ lang }) {
         setForm((prev) => ({
             ...prev,
             installments: prev.installments.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+        }));
+    };
+
+    const handleAddressChange = (e) => {
+        const { id, value } = e.target;
+        setForm((prev) => ({
+            ...prev,
+            clientAddress: {
+                ...prev.clientAddress,
+                [id]: value
+            }
         }));
     };
 
@@ -332,8 +362,31 @@ export default function ContractsCreateForm({ lang }) {
                     </div>
 
                     <div className="field col-12">
-                        <label htmlFor="clientAddress">{t.clientAddress}</label>
-                        <InputText id="clientAddress" placeholder={t.clientAddress} value={form.clientAddress} onChange={(e) => setForm({ ...form, clientAddress: e.target.value })} />
+                        <label className="font-bold">{t.clientAddress}</label>
+                    </div>
+                    <div className="field col-12 md:col-4">
+                        <label htmlFor="Governorate">{t.governorate}</label>
+                        <InputText id="Governorate" placeholder={t.governorate} value={form.clientAddress.Governorate} onChange={handleAddressChange} />
+                    </div>
+                    <div className="field col-12 md:col-4">
+                        <label htmlFor="region">{t.region}</label>
+                        <InputText id="region" placeholder={t.region} value={form.clientAddress.region} onChange={handleAddressChange} />
+                    </div>
+                    <div className="field col-12 md:col-4">
+                        <label htmlFor="block">{t.block}</label>
+                        <InputText id="block" placeholder={t.block} value={form.clientAddress.block} onChange={handleAddressChange} />
+                    </div>
+                    <div className="field col-12 md:col-4">
+                        <label htmlFor="street">{t.street}</label>
+                        <InputText id="street" placeholder={t.street} value={form.clientAddress.street} onChange={handleAddressChange} />
+                    </div>
+                    <div className="field col-12 md:col-4">
+                        <label htmlFor="building">{t.building}</label>
+                        <InputText id="building" placeholder={t.building} value={form.clientAddress.building} onChange={handleAddressChange} />
+                    </div>
+                    <div className="field col-12 md:col-4">
+                        <label htmlFor="apartment">{t.apartment}</label>
+                        <InputText id="apartment" placeholder={t.apartment} value={form.clientAddress.apartment} onChange={handleAddressChange} />
                     </div>
 
                     {/* CONTRACT TYPE */}
@@ -343,8 +396,8 @@ export default function ContractsCreateForm({ lang }) {
                             id="contractType"
                             value={form.contractType}
                             options={[
-                                { label: t.maintenance, value: 'maintenance' },
-                                { label: t.rental, value: 'rental' }
+                                { label: t.maintenance, value: 'صيانه' },
+                                { label: t.rental, value: 'ايجار' }
                             ]}
                             onChange={(e) => setForm({ ...form, contractType: e.value })}
                             placeholder={t.contractType}

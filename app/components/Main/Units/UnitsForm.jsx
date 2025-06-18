@@ -208,15 +208,22 @@ export default function UnitsForm({ lang }) {
                             </div>
                             <div className="field col-12 md:col-3" key={'IF' + index}>
                                 <label htmlFor="floorNumber">{lang === 'en' ? 'Floor Number' : 'رقم الطابق'}</label>
-                                <InputNumber id="floorNumber" onChange={(e) => handleFloorNumberChange(e, index)} value={unit.floorNumber} />
+                                <InputNumber id="floorNumber" 
+                                useGrouping={false}
+                                onChange={(e) => handleFloorNumberChange(e, index)} value={unit.floorNumber} />
                             </div>
                             <div className="field col-12 md:col-2" key={'IU' + index}>
                                 <label htmlFor="unitNumber">{lang === 'en' ? 'Unit Number' : 'رقم الوحدة'}</label>
-                                <InputNumber id="unitNumber" onChange={(e) => handleUnitNumberChange(e, index)} value={unit.unitNumber} />
+                                <InputNumber
+                                useGrouping={false}
+                                id="unitNumber" onChange={(e) => handleUnitNumberChange(e, index)} value={unit.unitNumber} />
                             </div>
                             <div className="field col-12 md:col-2" key={'IA' + index}>
                                 <label htmlFor="autoNumber">{lang === 'en' ? 'Auto Number' : 'الرقم الآلي للوحدة'}</label>
-                                <InputNumber id="autoNumber" onChange={(e) => handleAutoNumberChange(e, index)} value={unit.autoNumber} />
+                                <InputNumber
+                                // No ,
+                                useGrouping={false}
+                                id="autoNumber" onChange={(e) => handleAutoNumberChange(e, index)} value={unit.autoNumber} />
                             </div>
                             <div className="field col-12 md:col-2" key={'IS' + index}>
                                 <label htmlFor="unitStatus">{lang === 'en' ? 'Unit Status' : 'حالة الوحدة'}</label>
