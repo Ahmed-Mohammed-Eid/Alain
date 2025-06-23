@@ -161,7 +161,7 @@ export default function ContractsEditForm({ lang, contractId }) {
                         clientPhone: contract.clientPhone,
                         clientName: contract.clientName,
                         clientIdNumber: contract.clientIdNumber,
-                        clientAddress: contract.clientAddress || { Governorate: '', region: '', block: '', street: '', building: '', apartment: '' },
+                        clientAddress:  typeof contract.clientAddress === 'string' ? { Governorate: '', region: '', block: '', street: '', building: '', apartment: '' } : contract.clientAddress || {},
                         contractType: contract.contractType || '',
                         contractDate: new Date(contract.contractDate),
                         contractStartDate: new Date(contract.contractStartDate),
