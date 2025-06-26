@@ -79,7 +79,7 @@
     "endDate": "End Date",
     "unpaidInstallments": "Unpaid Installments",
     "actions": "Actions",
-    "currency": "EGP",
+    "currency": "KWD",
     "noDataFound": "No data found",
     "errors": {
         "general": "An error occurred while fetching data"

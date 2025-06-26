@@ -293,7 +293,23 @@ export default function ContractsList({ lang }) {
             >
                 <Column field="clientName" header={lang === 'en' ? 'Client Name' : 'اسم العميل'} sortable filter />
                 <Column field="clientPhone" header={lang === 'en' ? 'Phone Number' : 'رقم الهاتف'} sortable filter />
-                <Column field="clientAddress" header={lang === 'en' ? 'Client Address' : 'عنوان العميل'} sortable filter />
+                <Column
+                    field="clientAddress"
+                    header={lang === 'en' ? 'Client Address' : 'عنوان العميل'}
+                    sortable
+                    filter
+                    body={(rowData) => {
+                        const isString = typeof rowData.clientAddress === 'string';
+                        if (isString) {
+                            return <span>{rowData.clientAddress}</span>;
+                        }
+                        return (
+                            <span>
+                                {rowData.clientAddress?.Governorate} - {rowData.clientAddress?.region} - {rowData.clientAddress?.block} - {rowData.clientAddress?.street} - {rowData.clientAddress?.building} - {rowData.clientAddress?.apartment}
+                            </span>
+                        );
+                    }}
+                />
                 <Column
                     field="username"
                     header={lang === 'en' ? 'User Name' : 'اسم المستخدم'}
@@ -364,7 +380,16 @@ export default function ContractsList({ lang }) {
 
                     <div className={'col-12 md:col-6'}>
                         <h5>{lang === 'en' ? 'Address' : 'العنوان'}</h5>
-                        <p>{selectedItem?.clientAddress}</p>
+                        <p>
+                            {typeof selectedItem?.clientAddress === 'string' ? (
+                                <span>{selectedItem?.clientAddress}</span>
+                            ) : (
+                                <>
+                                    {selectedItem?.clientAddress?.Governorate} - {selectedItem?.clientAddress?.region} - {selectedItem?.clientAddress?.block} - {selectedItem?.clientAddress?.street} - {selectedItem?.clientAddress?.building} -{' '}
+                                    {selectedItem?.clientAddress?.apartment}
+                                </>
+                            )}
+                        </p>
                     </div>
 
                     <div className={'col-12 md:col-6'}>

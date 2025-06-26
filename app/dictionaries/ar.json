@@ -79,7 +79,7 @@
     "endDate": "تاريخ النهاية",
     "unpaidInstallments": "الأقساط غير المدفوعة",
     "actions": "الإجراءات",
-    "currency": "جنيه",
+    "currency": "دينار",
     "noDataFound": "لا توجد بيانات",
     "errors": {
         "general": "حدث خطأ أثناء جلب البيانات"

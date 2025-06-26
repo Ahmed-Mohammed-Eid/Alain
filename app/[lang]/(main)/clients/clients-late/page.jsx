@@ -22,7 +22,7 @@ const translations = {
         endDate: 'End Date',
         unpaidInstallments: 'Unpaid',
         actions: 'Actions',
-        currency: 'EGP',
+        currency: 'KWD',
         noDataFound: 'No data found',
         error: 'An error occurred while fetching data',
         clientDetails: 'Client Details',
@@ -49,7 +49,7 @@ const translations = {
         endDate: 'تاريخ النهاية',
         unpaidInstallments: 'غير مدفوع',
         actions: 'الإجراءات',
-        currency: 'جنيه',
+        currency: 'دينار',
         noDataFound: 'لا توجد بيانات',
         error: 'حدث خطأ أثناء جلب البيانات',
         clientDetails: 'تفاصيل العميل',
@@ -150,19 +150,27 @@ const ClientsLate = ({ params: { lang } }) => {
                                 <div className="flex flex-column gap-3">
                                     <div>
                                         <label className="font-bold block mb-1">{trans.clientName}</label>
-                                        <span>{selectedClient.clientName}</span>
+                                        <span>{selectedClient?.clientName}</span>
                                     </div>
                                     <div>
                                         <label className="font-bold block mb-1">{trans.clientIdNumber}</label>
-                                        <span>{selectedClient.clientIdNumber}</span>
+                                        <span>{selectedClient?.clientIdNumber}</span>
                                     </div>
                                     <div>
                                         <label className="font-bold block mb-1">{trans.clientPhone}</label>
-                                        <span>{selectedClient.clientPhone}</span>
+                                        <span>{selectedClient?.clientPhone}</span>
                                     </div>
                                     <div>
                                         <label className="font-bold block mb-1">{trans.clientAddress}</label>
-                                        <span>{selectedClient.clientAddress}</span>
+                                        <span>
+                                            {typeof selectedClient?.clientAddress === 'string' ? (
+                                                <span>{selectedClient?.clientAddress}</span>
+                                            ) : (
+                                                <>
+                                                    {selectedClient?.clientAddress?.Governorate} - {selectedClient?.clientAddress?.region} - {selectedClient?.clientAddress?.block} - {selectedClient?.clientAddress?.street} - {selectedClient?.clientAddress?.building} - {selectedClient?.clientAddress?.apartment}
+                                                </>
+                                            )}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -170,25 +178,25 @@ const ClientsLate = ({ params: { lang } }) => {
                                 <div className="flex flex-column gap-3">
                                     <div>
                                         <label className="font-bold block mb-1">{trans.contractType}</label>
-                                        <span>{selectedClient.contractType}</span>
+                                        <span>{selectedClient?.contractType}</span>
                                     </div>
                                     <div>
                                         <label className="font-bold block mb-1">{trans.contractAmount}</label>
                                         <span>
-                                            {selectedClient.contractAmount} {trans.currency}
+                                            {selectedClient?.contractAmount} {trans.currency}
                                         </span>
                                     </div>
                                     <div>
                                         <label className="font-bold block mb-1">{trans.contractDate}</label>
-                                        <span>{formatDate(selectedClient.contractDate)}</span>
+                                        <span>{formatDate(selectedClient?.contractDate)}</span>
                                     </div>
                                     <div>
                                         <label className="font-bold block mb-1">{trans.startDate}</label>
-                                        <span>{formatDate(selectedClient.contractStartDate)}</span>
+                                        <span>{formatDate(selectedClient?.contractStartDate)}</span>
                                     </div>
                                     <div>
                                         <label className="font-bold block mb-1">{trans.endDate}</label>
-                                        <span>{formatDate(selectedClient.contractEndDate)}</span>
+                                        <span>{formatDate(selectedClient?.contractEndDate)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -198,7 +206,7 @@ const ClientsLate = ({ params: { lang } }) => {
                 <div className="col-12">
                     <div className="card">
                         <h2 className="text-xl font-bold mb-4">{trans.installmentDetails}</h2>
-                        <DataTable value={selectedClient.installments} className="p-datatable-gridlines" showGridlines stripedRows sortField="date" sortOrder={1}>
+                        <DataTable value={selectedClient?.installments} className="p-datatable-gridlines" showGridlines stripedRows sortField="date" sortOrder={1}>
                             <Column field="date" header={trans.date} body={(rowData) => formatDate(rowData.date)} sortable />
                             <Column field="price" header={trans.price} body={(rowData) => `${rowData.price} ${trans.currency}`} sortable />
                             <Column field="paymentType" header={trans.paymentType} sortable />
