@@ -31,6 +31,7 @@ export default function CreateService({ lang }) {
             files: 'الملفات',
             addService: 'إضافة الخدمة',
             fillAllFields: 'يرجى تعبئة جميع الحقول.',
+            enterServiceCost: 'يرجى إدخال تكلفة الخدمة.',
             addSuccess: 'تم إضافة الخدمة بنجاح.',
             addError: 'حدث خطأ أثناء إضافة الخدمة.',
             uploadFiles: 'رفع الملفات',
@@ -44,6 +45,7 @@ export default function CreateService({ lang }) {
             files: 'Files',
             addService: 'Add Service',
             fillAllFields: 'Please fill all fields.',
+            enterServiceCost: 'Please enter the service cost.',
             addSuccess: 'Service added successfully.',
             addError: 'Error adding service.',
             uploadFiles: 'Upload Files',
@@ -60,8 +62,13 @@ export default function CreateService({ lang }) {
 
         const token = localStorage.getItem('token');
 
-        if (form.serviceTitle === '' || form.serviceCost === 0) {
+        if (form.serviceTitle === '') {
             toast.error(t.fillAllFields);
+            return;
+        }
+
+        if(!form.contractedService && form.serviceCost === 0) {
+            toast.error(t.enterServiceCost);
             return;
         }
 
@@ -126,7 +133,7 @@ export default function CreateService({ lang }) {
                     <CustomFileUpload id={'files'} files={form.files} multiple setFiles={(files) => setForm({ ...form, files: files })} removeThisItem={(file) => setForm({ ...form, files: form.files.filter((f) => f.name !== file.name) })} />
                 </div>
 
-                <div className={`field col-12 md:col-6 mt-4 ${direction === 'rtl' ? 'ml-auto' : 'mr-auto'}`}>
+                <div className={`field col-12 mt-4 ${direction === 'rtl' ? 'ml-auto' : 'mr-auto'}`}>
                     <Button
                         type={'submit'}
                         label={

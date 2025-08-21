@@ -78,6 +78,10 @@ const AppMenu = ({ dictionary, lang }: ChildContainerProps) => {
             label: lang === 'en' ? 'Contracts' : 'العقود',
             items: [
                 { label: lang === 'en' ? 'Contracts List' : 'قائمة العقود', icon: 'pi pi-fw pi-list', to: `/${lang}/contracts` },
+                // Deleted Contracts
+                { label: lang === 'en' ? 'Deleted Contracts' : 'العقود المحذوفة', icon: 'pi pi-fw pi-trash', to: `/${lang}/contracts/deleted` },
+                // Expired Contracts
+                { label: lang === 'en' ? 'Expired Contracts' : 'العقود المنتهية', icon: 'pi pi-fw pi-clock', to: `/${lang}/contracts/expired` },
                 { label: lang === 'en' ? 'Add Contract' : 'إضافة عقد', icon: 'pi pi-fw pi-plus', to: `/${lang}/contracts/create` }
             ]
         },

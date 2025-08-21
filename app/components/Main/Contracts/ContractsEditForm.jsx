@@ -11,6 +11,10 @@ import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { useParams } from 'next/navigation';
 
+// REACT HOOK FORM
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { editContractSchema } from './schema/edit-form-schema';
 export default function ContractsEditForm({ lang, contractId }) {
     const { id } = useParams();
 
@@ -20,31 +24,45 @@ export default function ContractsEditForm({ lang, contractId }) {
     const [realestates, setRealestates] = useState([]);
     const [units, setUnits] = useState([]);
 
-    // STATE
-    const [form, setForm] = useState({
-        contractDate: null,
-        clientName: '',
-        contractType: '',
-        clientIdNumber: '',
-        clientPhone: '',
-        clientAddress: {
-            Governorate: '',
-            region: '',
-            block: '',
-            street: '',
-            building: '',
-            apartment: ''
-        },
-        contractAmount: 0,
-        contractStartDate: null,
-        contractDuration: 0,
-        contractEndDate: null,
-        realestateId: null,
-        unitsId: [],
-        installments: [],
-        installmentsNumber: 0
+    // REACT HOOK FORM
+    const schema = editContractSchema(lang);
+    const {
+        control,
+        handleSubmit: handleFormSubmit,
+        formState: { errors },
+        setValue,
+        watch,
+        reset
+    } = useForm({
+        resolver: zodResolver(schema),
+        defaultValues: {
+            contractDate: null,
+            clientName: '',
+            contractType: '',
+            clientIdNumber: '',
+            clientPhone: '',
+            clientAddress: {
+                Governorate: '',
+                region: '',
+                block: '',
+                street: '',
+                building: '',
+                apartment: ''
+            },
+            contractAmount: 0,
+            contractStartDate: null,
+            contractDuration: 0,
+            contractEndDate: null,
+            realestateId: null,
+            unitsId: [],
+            installments: [],
+            installmentsNumber: 0
+        }
     });
 
+    // WATCH FORM VALUES
+    const watchedRealestateId = watch('realestateId');
+    const watchedInstallments = watch('installments', []);
     // TRANSLATIONS
     const translations = {
         ar: {
@@ -155,13 +173,13 @@ export default function ContractsEditForm({ lang, contractId }) {
 
                 const contract = response.data?.clientContract;
                 if (contract) {
-                    // Convert date strings to Date objects
-                    setForm({
+                    // Convert date strings to Date objects and set form values
+                    reset({
                         ...contract,
                         clientPhone: contract.clientPhone,
                         clientName: contract.clientName,
                         clientIdNumber: contract.clientIdNumber,
-                        clientAddress:  typeof contract.clientAddress === 'string' ? { Governorate: '', region: '', block: '', street: '', building: '', apartment: '' } : contract.clientAddress || {},
+                        clientAddress: typeof contract.clientAddress === 'string' ? { Governorate: '', region: '', block: '', street: '', building: '', apartment: '' } : contract.clientAddress || {},
                         contractType: contract.contractType || '',
                         contractDate: new Date(contract.contractDate),
                         contractStartDate: new Date(contract.contractStartDate),
@@ -184,8 +202,7 @@ export default function ContractsEditForm({ lang, contractId }) {
         };
 
         fetchContractData();
-    }, [id]);
-
+    }, [id, reset]);
     const fetchRealestates = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -230,60 +247,65 @@ export default function ContractsEditForm({ lang, contractId }) {
                 return;
             }
 
-            // Transform units data from the API response
-            const unitsData = response.data.realestate.units.map((unit) => ({
-                _id: unit._id,
-                title: `${unit.unitType}${unit.floorNumber ? ` - Floor ${unit.floorNumber}` : ''}${unit.unitNumber ? ` - Unit ${unit.unitNumber}` : ''}`
-            }));
+            const unitsData = [];
+
+            response.data.realestate.units.forEach((unit) => {
+                if (unit?.unitStatus === 'vacant') {
+                    unitsData.push({
+                        _id: unit._id,
+                        title: `${unit.unitType}${unit.floorNumber ? ` - Floor ${unit.floorNumber}` : ''}${unit.unitNumber ? ` - Unit ${unit.unitNumber}` : ''}`
+                    });
+                }
+            });
 
             setUnits(unitsData);
         } catch (error) {
             toast.error(t.failedFetchUnits);
         }
     };
-
     useEffect(() => {
-        if (form.realestateId) {
-            fetchUnits(form.realestateId);
+        if (watchedRealestateId) {
+            fetchUnits(watchedRealestateId);
         } else {
             setUnits([]);
         }
-    }, [form.realestateId]);
-
+    }, [watchedRealestateId]);
     // Update installment data
     const updateInstallment = (index, field, value) => {
-        setForm((prev) => ({
-            ...prev,
-            installments: prev.installments.map((item, i) => (i === index ? { ...item, [field]: value } : item))
-        }));
+        const currentInstallments = watchedInstallments || [];
+        const newInstallments = currentInstallments.map((item, i) => (i === index ? { ...item, [field]: value } : item));
+        setValue('installments', newInstallments);
     };
-
     const handleAddressChange = (e) => {
         const { id, value } = e.target;
-        setForm((prev) => ({
-            ...prev,
-            clientAddress: {
-                ...prev.clientAddress,
-                [id]: value
-            }
-        }));
+        const currentAddress = watch('clientAddress') || {};
+        setValue('clientAddress', {
+            ...currentAddress,
+            [id]: value
+        });
     };
 
-    async function calculateInstallments() {
+    const calculateInstallments = async () => {
+        // Get current form values
+        const contractAmount = watch('contractAmount');
+        const installmentsNumber = watch('installmentsNumber');
+        const contractStartDate = watch('contractStartDate');
+        const contractEndDate = watch('contractEndDate');
+
         // VALIDATE THE (AMOUNT && INSTALLMENTS NUMBER && START DATE && END DATE)
-        if (!form.contractAmount) {
+        if (!contractAmount) {
             toast.error(t.enterContractAmount);
             return;
         }
-        if (!form.installmentsNumber) {
+        if (!installmentsNumber) {
             toast.error(t.enterInstallmentsNumber);
             return;
         }
-        if (!form.contractStartDate) {
+        if (!contractStartDate) {
             toast.error(t.enterStartDate);
             return;
         }
-        if (!form.contractEndDate) {
+        if (!contractEndDate) {
             toast.error(t.enterEndDate);
             return;
         }
@@ -294,39 +316,43 @@ export default function ContractsEditForm({ lang, contractId }) {
             const response = await axios.get(`${process.env.API_URL}/calc/contract/payments`, {
                 headers: { Authorization: `Bearer ${token}` },
                 params: {
-                    contractAmount: form.contractAmount,
-                    installmentsNumber: form.installmentsNumber,
-                    startDate: form.contractStartDate,
-                    endDate: form.contractEndDate
+                    contractAmount: contractAmount,
+                    installmentsNumber: installmentsNumber,
+                    startDate: contractStartDate,
+                    endDate: contractEndDate
                 }
             });
 
             if (response.data?.paymentsData) {
-                setForm((prev) => ({
-                    ...prev,
-                    installments: response.data.paymentsData
-                }));
+                setValue('installments', response.data.paymentsData);
             }
         } catch (error) {
             console.error('Error calculating installments:', error);
             toast.error(t.errorCalculating);
         }
-    }
+    };
+
+    // GET THE REAL ESTATE NAME
+    const realestateId = watch('realestateId');
+    const selectedRealestate = realestates.find((item) => item._id === realestateId);
+    const realestateName = selectedRealestate ? selectedRealestate.title : '';
+    const unitsId = watch('unitsId'); // = [];
+    const selectedUnits = units.filter((unit) => unitsId.includes(unit._id));
+    const unitsTitlesArray = selectedUnits.map((unit) => unit.title);
 
     // Handle form submission
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        // Validate form
-        if (!form.clientPhone || !form.clientName || !form.contractAmount) {
-            toast.error(t.fillAllFields);
-            return;
-        }
-
+    const onSubmit = async (data) => {
         setLoading(true);
+
+        const dataToSend = {
+            ...data,
+            realestateTitle: realestateName,
+            unitsDetails: unitsTitlesArray
+        };
+
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`${process.env.API_URL}/edit/contract`, form, {
+            await axios.put(`${process.env.API_URL}/edit/contract`, dataToSend, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success(t.success);
@@ -337,6 +363,10 @@ export default function ContractsEditForm({ lang, contractId }) {
         }
     };
 
+    const onError = (errors) => {
+        console.log('Form validation errors:', errors);
+        toast.error(t.fillAllFields);
+    };
     if (initialLoading) {
         return (
             <div className="flex justify-content-center align-items-center" style={{ height: '70vh' }}>
@@ -346,24 +376,27 @@ export default function ContractsEditForm({ lang, contractId }) {
     }
 
     return (
-        <form className="mb-0" dir={direction} onSubmit={handleSubmit}>
+        <form className="mb-0" dir={direction} onSubmit={handleFormSubmit(onSubmit, onError)}>
             <div className="card">
                 <h1 className="text-2xl font-bold mb-4 uppercase">{t.title}</h1>
                 <div className="grid formgrid p-fluid">
                     {/* Client Information */}
                     <div className="field col-12">
                         <label htmlFor="clientPhone">{t.clientPhone}</label>
-                        <InputText id="clientPhone" value={form.clientPhone} onChange={(e) => setForm({ ...form, clientPhone: e.target.value })} placeholder={t.clientPhone} />
+                        <Controller name="clientPhone" control={control} render={({ field }) => <InputText id="clientPhone" placeholder={t.clientPhone} {...field} className={errors.clientPhone ? 'p-invalid' : ''} />} />
+                        {errors.clientPhone && <small className="p-error">{errors.clientPhone.message}</small>}
                     </div>
 
                     <div className="field col-12 md:col-6">
                         <label htmlFor="clientName">{t.clientName}</label>
-                        <InputText id="clientName" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} placeholder={t.clientName} />
+                        <Controller name="clientName" control={control} render={({ field }) => <InputText id="clientName" placeholder={t.clientName} {...field} className={errors.clientName ? 'p-invalid' : ''} />} />
+                        {errors.clientName && <small className="p-error">{errors.clientName.message}</small>}
                     </div>
 
                     <div className="field col-12 md:col-6">
                         <label htmlFor="clientIdNumber">{t.clientIdNumber}</label>
-                        <InputText id="clientIdNumber" value={form.clientIdNumber} onChange={(e) => setForm({ ...form, clientIdNumber: e.target.value })} placeholder={t.clientIdNumber} />
+                        <Controller name="clientIdNumber" control={control} render={({ field }) => <InputText id="clientIdNumber" placeholder={t.clientIdNumber} {...field} className={errors.clientIdNumber ? 'p-invalid' : ''} />} />
+                        {errors.clientIdNumber && <small className="p-error">{errors.clientIdNumber.message}</small>}
                     </div>
 
                     <div className="field col-12">
@@ -371,105 +404,264 @@ export default function ContractsEditForm({ lang, contractId }) {
                     </div>
                     <div className="field col-12 md:col-4">
                         <label htmlFor="Governorate">{t.governorate}</label>
-                        <InputText id="Governorate" placeholder={t.governorate} value={form.clientAddress.Governorate} onChange={handleAddressChange} />
+                        <Controller
+                            name="clientAddress.Governorate"
+                            control={control}
+                            render={({ field }) => (
+                                <InputText
+                                    id="Governorate"
+                                    placeholder={t.governorate}
+                                    {...field}
+                                    className={errors.clientAddress?.Governorate ? 'p-invalid' : ''}
+                                    onChange={(e) => {
+                                        field.onChange(e);
+                                        handleAddressChange(e);
+                                    }}
+                                />
+                            )}
+                        />
                     </div>
                     <div className="field col-12 md:col-4">
                         <label htmlFor="region">{t.region}</label>
-                        <InputText id="region" placeholder={t.region} value={form.clientAddress.region} onChange={handleAddressChange} />
+                        <Controller
+                            name="clientAddress.region"
+                            control={control}
+                            render={({ field }) => (
+                                <InputText
+                                    id="region"
+                                    placeholder={t.region}
+                                    {...field}
+                                    className={errors.clientAddress?.region ? 'p-invalid' : ''}
+                                    onChange={(e) => {
+                                        field.onChange(e);
+                                        handleAddressChange(e);
+                                    }}
+                                />
+                            )}
+                        />
                     </div>
                     <div className="field col-12 md:col-4">
                         <label htmlFor="block">{t.block}</label>
-                        <InputText id="block" placeholder={t.block} value={form.clientAddress.block} onChange={handleAddressChange} />
+                        <Controller
+                            name="clientAddress.block"
+                            control={control}
+                            render={({ field }) => (
+                                <InputText
+                                    id="block"
+                                    placeholder={t.block}
+                                    {...field}
+                                    className={errors.clientAddress?.block ? 'p-invalid' : ''}
+                                    onChange={(e) => {
+                                        field.onChange(e);
+                                        handleAddressChange(e);
+                                    }}
+                                />
+                            )}
+                        />
                     </div>
                     <div className="field col-12 md:col-4">
                         <label htmlFor="street">{t.street}</label>
-                        <InputText id="street" placeholder={t.street} value={form.clientAddress.street} onChange={handleAddressChange} />
+                        <Controller
+                            name="clientAddress.street"
+                            control={control}
+                            render={({ field }) => (
+                                <InputText
+                                    id="street"
+                                    placeholder={t.street}
+                                    {...field}
+                                    className={errors.clientAddress?.street ? 'p-invalid' : ''}
+                                    onChange={(e) => {
+                                        field.onChange(e);
+                                        handleAddressChange(e);
+                                    }}
+                                />
+                            )}
+                        />
                     </div>
                     <div className="field col-12 md:col-4">
                         <label htmlFor="building">{t.building}</label>
-                        <InputText id="building" placeholder={t.building} value={form.clientAddress.building} onChange={handleAddressChange} />
+                        <Controller
+                            name="clientAddress.building"
+                            control={control}
+                            render={({ field }) => (
+                                <InputText
+                                    id="building"
+                                    placeholder={t.building}
+                                    {...field}
+                                    className={errors.clientAddress?.building ? 'p-invalid' : ''}
+                                    onChange={(e) => {
+                                        field.onChange(e);
+                                        handleAddressChange(e);
+                                    }}
+                                />
+                            )}
+                        />
                     </div>
                     <div className="field col-12 md:col-4">
                         <label htmlFor="apartment">{t.apartment}</label>
-                        <InputText id="apartment" placeholder={t.apartment} value={form.clientAddress.apartment} onChange={handleAddressChange} />
+                        <Controller
+                            name="clientAddress.apartment"
+                            control={control}
+                            render={({ field }) => (
+                                <InputText
+                                    id="apartment"
+                                    placeholder={t.apartment}
+                                    {...field}
+                                    className={errors.clientAddress?.apartment ? 'p-invalid' : ''}
+                                    onChange={(e) => {
+                                        field.onChange(e);
+                                        handleAddressChange(e);
+                                    }}
+                                />
+                            )}
+                        />
                     </div>
 
                     {/* CONTRACT TYPE */}
                     <div className="field col-12">
                         <label htmlFor="contractType">{t.contractType}</label>
-                        <Dropdown
-                            id="contractType"
-                            value={form.contractType}
-                            options={[
-                                { label: t.maintenance, value: 'صيانه' },
-                                { label: t.rental, value: 'ايجار' }
-                            ]}
-                            onChange={(e) => setForm({ ...form, contractType: e.value })}
-                            placeholder={t.contractType}
+                        <Controller
+                            name="contractType"
+                            control={control}
+                            render={({ field }) => (
+                                <Dropdown
+                                    id="contractType"
+                                    {...field}
+                                    options={[
+                                        { label: t.maintenance, value: 'صيانه' },
+                                        { label: t.rental, value: 'ايجار' }
+                                    ]}
+                                    placeholder={t.contractType}
+                                    className={errors.contractType ? 'p-invalid' : ''}
+                                    onChange={(e) => field.onChange(e.value)}
+                                />
+                            )}
                         />
+                        {errors.contractType && <small className="p-error">{errors.contractType.message}</small>}
                     </div>
 
                     {/* REAL ESTATE */}
                     <div className="field col-12 md:col-6">
                         <label htmlFor="realestateId">{t.realEstate}</label>
-                        <Dropdown id="realestateId" value={form.realestateId} options={realestates} optionLabel="title" optionValue="_id" onChange={(e) => setForm({ ...form, realestateId: e.value })} placeholder={t.realEstate} />
+                        <Controller
+                            name="realestateId"
+                            control={control}
+                            render={({ field }) => (
+                                <Dropdown
+                                    id="realestateId"
+                                    {...field}
+                                    options={realestates}
+                                    optionLabel="title"
+                                    optionValue="_id"
+                                    placeholder={t.realEstate}
+                                    className={errors.realestateId ? 'p-invalid' : ''}
+                                    onChange={(e) => field.onChange(e.value)}
+                                />
+                            )}
+                        />
+                        {errors.realestateId && <small className="p-error">{errors.realestateId.message}</small>}
                     </div>
 
                     {/* UNITS */}
                     <div className="field col-12 md:col-6">
                         <label htmlFor="unitsId">{t.units}</label>
-                        <MultiSelect
-                            id="unitsId"
-                            display="chip"
-                            value={form.unitsId}
-                            options={units}
-                            optionLabel="title"
-                            optionValue="_id"
-                            onChange={(e) => setForm({ ...form, unitsId: e.value })}
-                            placeholder={t.units}
-                            disabled={!form.realestateId}
+                        <Controller
+                            name="unitsId"
+                            control={control}
+                            render={({ field }) => (
+                                <MultiSelect
+                                    id="unitsId"
+                                    display="chip"
+                                    {...field}
+                                    options={units}
+                                    optionLabel="title"
+                                    optionValue="_id"
+                                    placeholder={t.units}
+                                    className={errors.unitsId ? 'p-invalid' : ''}
+                                    disabled={!watchedRealestateId}
+                                    onChange={(e) => field.onChange(e.value)}
+                                />
+                            )}
                         />
+                        {errors.unitsId && <small className="p-error">{errors.unitsId.message}</small>}
                     </div>
 
                     {/* Contract Details */}
                     <div className="field col-12 md:col-6">
                         <label htmlFor="contractDate">{t.contractDate}</label>
-                        <Calendar id="contractDate" value={form.contractDate} onChange={(e) => setForm({ ...form, contractDate: e.value })} dateFormat="dd-mm-yy" placeholder={t.contractDate} />
+                        <Controller
+                            name="contractDate"
+                            control={control}
+                            render={({ field }) => <Calendar id="contractDate" placeholder={t.contractDate} {...field} className={errors.contractDate ? 'p-invalid' : ''} dateFormat="dd-mm-yy" onChange={(e) => field.onChange(e.value)} />}
+                        />
                     </div>
 
                     <div className="field col-12 md:col-6">
                         <label htmlFor="contractAmount">{t.contractAmount}</label>
-                        <InputNumber id="contractAmount" value={form.contractAmount} onValueChange={(e) => setForm({ ...form, contractAmount: e.value })} placeholder={t.contractAmount} />
+                        <Controller
+                            name="contractAmount"
+                            control={control}
+                            render={({ field }) => <InputNumber id="contractAmount" placeholder={t.contractAmount} {...field} className={errors.contractAmount ? 'p-invalid' : ''} onChange={(e) => field.onChange(e.value)} />}
+                        />
+                        {errors.contractAmount && <small className="p-error">{errors.contractAmount.message}</small>}
                     </div>
 
                     <div className="field col-12 md:col-6">
                         <label htmlFor="contractDuration">{t.contractDuration}</label>
-                        <InputNumber id="contractDuration" min={0} showButtons value={form.contractDuration} onValueChange={(e) => setForm({ ...form, contractDuration: e.value })} placeholder={t.contractDuration} />
+                        <Controller
+                            name="contractDuration"
+                            control={control}
+                            render={({ field }) => <InputNumber id="contractDuration" min={0} showButtons placeholder={t.contractDuration} {...field} className={errors.contractDuration ? 'p-invalid' : ''} onChange={(e) => field.onChange(e.value)} />}
+                        />
                     </div>
 
                     {/* INSTALLMENTS NUMBER */}
                     <div className="field col-12 md:col-6">
                         <label htmlFor="installmentsNumber">{t.installmentsNumber}</label>
-                        <InputNumber
-                            id="installmentsNumber"
-                            min={0}
-                            showButtons
-                            placeholder={t.installmentsNumber}
-                            value={form.installmentsNumber}
-                            onValueChange={(e) => {
-                                setForm({ ...form, installmentsNumber: e.value, installments: [] });
-                            }}
+                        <Controller
+                            name="installmentsNumber"
+                            control={control}
+                            render={({ field }) => (
+                                <InputNumber
+                                    id="installmentsNumber"
+                                    min={0}
+                                    showButtons
+                                    placeholder={t.installmentsNumber}
+                                    {...field}
+                                    className={errors.installmentsNumber ? 'p-invalid' : ''}
+                                    onChange={(e) => {
+                                        field.onChange(e.value);
+                                        // Clear installments when number changes
+                                        setValue('installments', []);
+                                    }}
+                                />
+                            )}
                         />
+                        {errors.installmentsNumber && <small className="p-error">{errors.installmentsNumber.message}</small>}
                     </div>
 
                     <div className="field col-12 md:col-6">
                         <label htmlFor="contractStartDate">{t.contractStartDate}</label>
-                        <Calendar id="contractStartDate" showIcon value={form.contractStartDate} onChange={(e) => setForm({ ...form, contractStartDate: e.value })} dateFormat="dd-mm-yy" placeholder={t.contractStartDate} />
+                        <Controller
+                            name="contractStartDate"
+                            control={control}
+                            render={({ field }) => (
+                                <Calendar id="contractStartDate" showIcon placeholder={t.contractStartDate} {...field} className={errors.contractStartDate ? 'p-invalid' : ''} dateFormat="dd-mm-yy" onChange={(e) => field.onChange(e.value)} />
+                            )}
+                        />
+                        {errors.contractStartDate && <small className="p-error">{errors.contractStartDate.message}</small>}
                     </div>
 
                     <div className="field col-12 md:col-6">
                         <label htmlFor="contractEndDate">{t.contractEndDate}</label>
-                        <Calendar id="contractEndDate" showIcon value={form.contractEndDate} onChange={(e) => setForm({ ...form, contractEndDate: e.value })} dateFormat="dd-mm-yy" placeholder={t.contractEndDate} />
+                        <Controller
+                            name="contractEndDate"
+                            control={control}
+                            render={({ field }) => (
+                                <Calendar id="contractEndDate" showIcon placeholder={t.contractEndDate} {...field} className={errors.contractEndDate ? 'p-invalid' : ''} dateFormat="dd-mm-yy" onChange={(e) => field.onChange(e.value)} />
+                            )}
+                        />
+                        {errors.contractEndDate && <small className="p-error">{errors.contractEndDate.message}</small>}
                     </div>
                 </div>
             </div>
@@ -483,33 +675,65 @@ export default function ContractsEditForm({ lang, contractId }) {
                         <Button type="button" icon="pi pi-calculator" label={t.calculateInstallments} size="small" severity="info" onClick={calculateInstallments} />
                     </div>
 
-                    {form.installments.map((installment, index) => (
+                    {watchedInstallments.map((installment, index) => (
                         <div key={index} className="grid formgrid p-fluid mb-3">
                             <div className="field col-12 md:col-3">
                                 <label htmlFor={`installmentDate-${index}`}>{t.date}</label>
-                                <Calendar id={`installmentDate-${index}`} value={installment.date} onChange={(e) => updateInstallment(index, 'date', e.value)} dateFormat="dd-mm-yy" placeholder={t.date} />
+                                <Controller
+                                    name={`installments.${index}.date`}
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Calendar
+                                            id={`installmentDate-${index}`}
+                                            {...field}
+                                            value={field.value ? new Date(field.value) : null}
+                                            dateFormat="dd-mm-yy"
+                                            placeholder={t.date}
+                                            className={errors.installments?.[index]?.date ? 'p-invalid' : ''}
+                                            onChange={(e) => field.onChange(e.value)}
+                                        />
+                                    )}
+                                />
+                                {errors.installments?.[index]?.date && <small className="p-error">{errors.installments[index].date.message}</small>}
                             </div>
                             <div className="field col-12 md:col-3">
                                 <label htmlFor={`installmentPrice-${index}`}>{t.price}</label>
-                                <InputNumber id={`installmentPrice-${index}`} value={installment.price} onValueChange={(e) => updateInstallment(index, 'price', e.value)} placeholder={t.price} />
+                                <Controller
+                                    name={`installments.${index}.price`}
+                                    control={control}
+                                    render={({ field }) => <InputNumber id={`installmentPrice-${index}`} {...field} placeholder={t.price} className={errors.installments?.[index]?.price ? 'p-invalid' : ''} onChange={(e) => field.onChange(e.value)} />}
+                                />
+                                {errors.installments?.[index]?.price && <small className="p-error">{errors.installments[index].price.message}</small>}
                             </div>
                             <div className="field col-12 md:col-3">
                                 <label htmlFor={`installmentReason-${index}`}>{t.reason}</label>
-                                <InputText id={`installmentReason-${index}`} value={installment.reason} onChange={(e) => updateInstallment(index, 'reason', e.target.value)} placeholder={t.reason} />
+                                <Controller
+                                    name={`installments.${index}.reason`}
+                                    control={control}
+                                    render={({ field }) => <InputText id={`installmentReason-${index}`} {...field} placeholder={t.reason} className={errors.installments?.[index]?.reason ? 'p-invalid' : ''} />}
+                                />
                             </div>
                             <div className="field col-12 md:col-3">
                                 <label htmlFor={`installmentPaymentType-${index}`}>{t.paymentType}</label>
-                                <Dropdown
-                                    id={`installmentPaymentType-${index}`}
-                                    value={installment.paymentType}
-                                    defaultValue={t.card}
-                                    options={[
-                                        { label: t.card, value: 'card' },
-                                        { label: t.cash, value: 'cash' },
-                                        { label: t.check, value: 'check' }
-                                    ]}
-                                    onChange={(e) => updateInstallment(index, 'paymentType', e.value)}
+                                <Controller
+                                    name={`installments.${index}.paymentType`}
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Dropdown
+                                            id={`installmentPaymentType-${index}`}
+                                            {...field}
+                                            options={[
+                                                { label: t.card, value: 'card' },
+                                                { label: t.cash, value: 'cash' },
+                                                { label: t.check, value: 'check' }
+                                            ]}
+                                            placeholder={t.paymentType}
+                                            className={errors.installments?.[index]?.paymentType ? 'p-invalid' : ''}
+                                            onChange={(e) => field.onChange(e.value)}
+                                        />
+                                    )}
                                 />
+                                {errors.installments?.[index]?.paymentType && <small className="p-error">{errors.installments[index].paymentType.message}</small>}
                             </div>
                         </div>
                     ))}

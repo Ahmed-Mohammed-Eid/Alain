@@ -163,7 +163,7 @@ export default function EditRealEstate({ realEstateId, lang }) {
                     <InputNumber id="shops" value={form.shops} onValueChange={(e) => setForm({ ...form, shops: e.value })} placeholder={t.shopsCount} min={0} />
                 </div>
 
-                <div className={`field col-12 md:col-6 mt-4 ${direction === 'rtl' ? 'ml-auto' : 'mr-auto'}`}>
+                <div className={`field col-12 mt-4 ${direction === 'rtl' ? 'ml-auto' : 'mr-auto'}`}>
                     <Button
                         type={'submit'}
                         label={

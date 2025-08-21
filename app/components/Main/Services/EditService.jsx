@@ -31,6 +31,7 @@ export default function EditService({ serviceId, lang }) {
             files: 'الملفات',
             editService: 'تعديل الخدمة',
             fillAllFields: 'يرجى تعبئة جميع الحقول.',
+            enterServiceCost: 'يرجى إدخال تكلفة الخدمة.',
             editSuccess: 'تم تعديل الخدمة بنجاح.',
             editError: 'حدث خطأ أثناء تعديل الخدمة.',
             fetchError: 'حدث خطأ أثناء جلب بيانات الخدمة.',
@@ -45,6 +46,7 @@ export default function EditService({ serviceId, lang }) {
             files: 'Files',
             editService: 'Edit Service',
             fillAllFields: 'Please fill all fields.',
+            enterServiceCost: 'Please enter the service cost.',
             editSuccess: 'Service edited successfully.',
             editError: 'Error editing service.',
             fetchError: 'Error fetching service data.',
@@ -86,8 +88,13 @@ export default function EditService({ serviceId, lang }) {
 
         const token = localStorage.getItem('token');
 
-        if (form.serviceTitle === '' || form.serviceCost === 0) {
+        if (form.serviceTitle === '') {
             toast.error(t.fillAllFields);
+            return;
+        }
+
+        if (!form.contractedService && form.serviceCost === 0) {
+            toast.error(t.enterServiceCost);
             return;
         }
 
@@ -152,7 +159,7 @@ export default function EditService({ serviceId, lang }) {
                     <CustomFileUpload id={'files'} files={form.files} multiple setFiles={(files) => setForm({ ...form, files: files })} removeThisItem={(file) => setForm({ ...form, files: form.files.filter((f) => f.name !== file.name) })} />
                 </div>
 
-                <div className={`field col-12 md:col-6 mt-4 ${direction === 'rtl' ? 'ml-auto' : 'mr-auto'}`}>
+                <div className={`field col-12 mt-4 ${direction === 'rtl' ? 'ml-auto' : 'mr-auto'}`}>
                     <Button
                         type={'submit'}
                         label={
