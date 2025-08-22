@@ -293,23 +293,61 @@ export default function ContractsList({ lang }) {
             >
                 <Column field="clientName" header={lang === 'en' ? 'Client Name' : 'اسم العميل'} sortable filter />
                 <Column field="clientPhone" header={lang === 'en' ? 'Phone Number' : 'رقم الهاتف'} sortable filter />
+
+                {/* BUILDING DETAILS */}
                 <Column
-                    field="clientAddress"
-                    header={lang === 'en' ? 'Client Address' : 'عنوان العميل'}
+                    field="_id"
+                    header={lang === 'en' ? 'Building Name' : 'اسم المبنى'}
                     sortable
                     filter
                     body={(rowData) => {
-                        const isString = typeof rowData.clientAddress === 'string';
-                        if (isString) {
-                            return <span>{rowData.clientAddress}</span>;
-                        }
+                        const listOfBuildings = [];
+                        const buildingDetails = rowData?.contractsIds || [];
+                        
+                        buildingDetails.forEach(i => {
+                            if (!listOfBuildings.includes(i.realestateTitle)) {
+                                // If the building name doesn't exist, push the contract ID
+                                listOfBuildings.push(i.realestateTitle);
+                            }
+                        });
+                        console.log("REALESTATE TITLES:", listOfBuildings);
                         return (
-                            <span>
-                                {rowData.clientAddress?.Governorate} - {rowData.clientAddress?.region} - {rowData.clientAddress?.block} - {rowData.clientAddress?.street} - {rowData.clientAddress?.building} - {rowData.clientAddress?.apartment}
-                            </span>
+                            <ul style={{ listStyleType: 'none', padding: 0 }}>
+                                {listOfBuildings.map((building, index) => (
+                                    <li key={index}>{building}</li>
+                                ))}
+                            </ul>
+                        );
+                    }}
+
+                />
+
+                {/* UNITS DETAILS */}
+                <Column
+                    field="_id"
+                    header={lang === 'en' ? 'Units' : 'الوحدات'}
+                    style={{whiteSpace: 'nowrap'}}
+                    sortable
+                    filter
+                    body={(rowData) => {
+                        const contractsIds = rowData?.contractsIds || [];
+                        // LOOP THROUGH CONTRACTS IDS
+                        const unitsDetails = contractsIds.map((unit) => {
+                            // Fetch unit details using the id
+                            return unit.unitsDetails;
+                        });
+                        // FLATTEN THE ARRAY
+                        const flattenedUnitsDetails = unitsDetails.flat();
+                        return (
+                            <ul style={{ listStyleType: 'none', padding: 0 }}>
+                                {flattenedUnitsDetails.map((detail, index) => (
+                                    <li key={index}>{detail}</li>
+                                ))}
+                            </ul>
                         );
                     }}
                 />
+
                 <Column
                     field="username"
                     header={lang === 'en' ? 'User Name' : 'اسم المستخدم'}
@@ -420,6 +458,31 @@ export default function ContractsList({ lang }) {
                             <Column expander={allowExpansion} style={{ width: '5rem' }} />
                             <Column field="contractDate" header={lang === 'en' ? 'Date' : 'التاريخ'} body={(rowData) => formatDate(rowData.contractDate)} sortable />
                             <Column field="contractAmount" header={lang === 'en' ? 'Amount' : 'المبلغ'} body={(rowData) => formatCurrency(rowData.contractAmount)} sortable />
+                            {/* BUILDING DETAILS */}
+                            <Column
+                                header={lang === 'en' ? 'Building' : 'المبنى'}
+                                body={(rowData) => {
+                                    return (
+                                        <p>{rowData?.realestateTitle || ''}</p>
+                                    );
+                                }}
+                            />
+
+                            {/* UNITS DETAILS */}
+                            <Column
+                                header={lang === 'en' ? 'Units' : 'الوحدات'}
+                                body={(rowData) => {
+                                    const unitsDetails = rowData.unitsDetails || [];
+                                    const flattenedUnitsDetails = unitsDetails.flat();
+                                    return (
+                                        <ul>
+                                            {flattenedUnitsDetails.map((detail, index) => (
+                                                <li key={index}>{detail}</li>
+                                            ))}
+                                        </ul>
+                                    );
+                                }}
+                            />
                             <Column
                                 header={lang === 'en' ? 'Actions' : 'الإجراءات'}
                                 style={{ width: '20%' }}
